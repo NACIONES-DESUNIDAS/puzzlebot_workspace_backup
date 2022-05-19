@@ -1,0 +1,2 @@
+puzzlebot_msgs:puzzlebot_navigation:puzzlebot_run:puzzlebot_vision
+-DCATKIN_DEVEL_PREFIX=/home/puzzlebot/puzzlebot_ws/devel -DCMAKE_INSTALL_PREFIX=/home/puzzlebot/puzzlebot_ws/install -G Unix Makefiles

@@ -1,0 +1,8 @@
+prefix=/home/puzzlebot/puzzlebot_ws/install
+
+Name: puzzlebot_run
+Description: Description of puzzlebot_run
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

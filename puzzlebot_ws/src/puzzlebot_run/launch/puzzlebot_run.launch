@@ -1,0 +1,3 @@
+<launch>
+    <node pkg="puzzlebot_run" type="puzzlebot_run.py" name="run" output="screen"/>
+</launch>

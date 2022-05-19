@@ -1,0 +1,8 @@
+prefix=/home/puzzlebot/puzzlebot_ws/install
+
+Name: puzzlebot_msgs
+Description: Description of puzzlebot_msgs
+Version: 0.0.0
+Cflags: -I${prefix}/include
+Libs: -L${prefix}/lib 
+Requires: actionlib_msgs std_msgs message_runtime geometry_msgs

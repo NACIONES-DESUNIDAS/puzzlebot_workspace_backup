@@ -1,0 +1,10 @@
+puzzlebot_vision:
+  traffic_lights:
+    parameters:
+      # Vision node publication rate in times per second
+      vision_pub_rate: 30
+      # Image scale factor for the OpenCV based image resize process
+      img_scale_factor: 50
+    topics:
+      # Camera topic where the vision node will extract the input Image messages
+      camera_topic: '/video_source/raw'

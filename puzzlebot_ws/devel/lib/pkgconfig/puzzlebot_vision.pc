@@ -1,0 +1,8 @@
+prefix=/home/puzzlebot/puzzlebot_ws/devel
+
+Name: puzzlebot_vision
+Description: Description of puzzlebot_vision
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 
