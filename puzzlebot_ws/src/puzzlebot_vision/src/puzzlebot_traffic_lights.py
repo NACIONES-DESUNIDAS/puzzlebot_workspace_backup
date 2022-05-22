@@ -70,6 +70,10 @@ class TrafficLightsDetector:
         # Initialize Publisher that will send Image messages with the node processed image output
         self.image_pub = rospy.Publisher(ROS_IMAGE_OUTPUT_TOPIC, Image, queue_size = 10)
 
+        self.green_image_pub = rospy.Publisher("green_binarized", Image, queue_size = 10)
+
+        self.red_image_pub = rospy.Publisher("red_binarized", Image, queue_size = 10)
+
         # Initialize Publishers that will send Bool messages if a red or green traffic light is detected
         self.red_light_detected_pub = rospy.Publisher(ROS_RED_LIGHT_DETECT_TOPIC, Bool, queue_size = 10)
         self.green_light_detected_pub = rospy.Publisher(ROS_GREEN_LIGHT_DETECT_TOPIC, Bool, queue_size = 10)
@@ -82,7 +86,7 @@ class TrafficLightsDetector:
 
         self.ranges = {"red":(np.array(UPPER_RED),np.array(LOWER_RED)),"green":(np.array(UPPER_GREEN),np.array(LOWER_GREEN))}        
         
-        self.kernel = np.array(MATT,dtype=np.uint8)
+        self.kernel = np.ones((5,5), np.uint8) # np.array(MATT,dtype=np.uint8)
 
 
     def preprocessImage(self, img):
@@ -119,11 +123,11 @@ class TrafficLightsDetector:
         ##########################################################################################################
 
         # Your code here...
-        upperRed = np.array([30,255,255])
+        upperRed = np.array([15,255,255])
         lowerRed = np.array([0,88,88])
 
         upperRed2 = np.array([180,255,255])
-        lowerRed2 = np.array([165,88,88])
+        lowerRed2 = np.array([170,88,88])
 
         hsv = cv2.cvtColor(img.copy(),cv2.COLOR_BGR2HSV)
 
@@ -151,8 +155,8 @@ class TrafficLightsDetector:
         ##########################################################################################################
         
         # Your code here...
-        upperRed = np.array([65, 255, 255])
-        lowerRed = np.array([37,60,60])        
+        upperRed = np.array([65,255,255])
+        lowerRed = np.array([45,180,88])        
         hsv = cv2.cvtColor(img.copy(),cv2.COLOR_BGR2HSV)
         filtered = cv2.inRange(hsv,lowerb=lowerRed,upperb=upperRed)
         masked = cv2.bitwise_and(img,img,mask=filtered)
@@ -162,7 +166,7 @@ class TrafficLightsDetector:
         
         return masked
 
-    def binarizeImage(self, masked,iters=2):
+    def binarizeImage(self, masked,iters=5):
         # Method used to binarize a colored input image, the image processing must be divided in:
         # 1 - Convert the image to a grayscale color space.
         # 2 - Use the requierd OpenCV function to binarize the image selecting an adequate theshold value.
@@ -176,7 +180,8 @@ class TrafficLightsDetector:
         # Your code here...
         gray = cv2.cvtColor(masked,cv2.COLOR_BGR2GRAY)
         threshold,thresh = cv2.threshold(gray,0,255,cv2.THRESH_BINARY_INV+cv2.THRESH_OTSU)
-        dilation = cv2.dilate(src=thresh,kernel=self.kernel ,iterations=iters)
+        erotion = cv2.erode(src=thresh,kernel=self.kernel ,iterations=iters)
+        dilation = cv2.dilate(src=erotion,kernel=self.kernel ,iterations=iters)
 
         ##########################################################################################################
         
@@ -202,21 +207,20 @@ class TrafficLightsDetector:
         # Your code here...
         params = cv2.SimpleBlobDetector_Params()
         params.filterByCircularity = True
-        params.minCircularity = 0.1
+        params.minCircularity = 0.6
         params.filterByArea = True
-        params.minArea = 100
+        params.minArea = 5000
+        params.maxArea = 60000
         detector = cv2.SimpleBlobDetector_create(params)
         keypoints = detector.detect(img)
         m = np.zeros(img.shape,dtype = np.uint8)
         black = cv2.merge([m,m,m])
-        rospy.loginfo(len(keypoints))
-        black = cv2.drawKeypoints(black,keypoints,black,color,cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+        blobs = cv2.drawKeypoints(black,keypoints,np.array([]),color,cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
         found = False if len(keypoints)  == 0 else True
-
 
         ##########################################################################################################
         
-        return found, black
+        return found, blobs
 
     def run(self):
         # Main loop
@@ -246,10 +250,15 @@ class TrafficLightsDetector:
             ##########################################################################################################
 
             output = self.bridge.cv2_to_imgmsg(filtered_image,encoding="bgr8")
+            output2 = self.bridge.cv2_to_imgmsg(red_pixel_binarized_image)
+            output3 = self.bridge.cv2_to_imgmsg(green_pixel_binarized_image)
 
             ##########################################################################################################
 
             self.image_pub.publish(output)
+
+            self.red_image_pub.publish(output2)
+            self.green_image_pub.publish(output3)
 
             self.red_light_detected_pub.publish(red_pixel_blob_found)
 
