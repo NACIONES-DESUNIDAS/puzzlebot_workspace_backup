@@ -5,6 +5,21 @@ puzzlebot_vision:
       vision_pub_rate: 30
       # Image scale factor for the OpenCV based image resize process
       img_scale_factor: 50
+
+    topics:
+      # Camera topic where the vision node will extract the input Image messages
+      camera_topic: '/video_source/raw'
+
+
+
+
+  line_detection:
+    parameters:
+      # line detection stuff
+      line_detection_pub_rate: 10
+      image_width:  480
+      image_height: 360
+
     topics:
       # Camera topic where the vision node will extract the input Image messages
       camera_topic: '/video_source/raw'
