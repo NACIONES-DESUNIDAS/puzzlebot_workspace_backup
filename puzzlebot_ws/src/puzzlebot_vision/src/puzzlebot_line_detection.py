@@ -67,7 +67,7 @@ class LineDetector:
 
         # publishers
         self.preprocessedImagePub = rospy.Publisher(OUTPUT_PREPROCESSED_IMAGE_TOPIC,Image,queue_size=10)
-        self.edgesImage = rospy.Publisher(OUTPUT_IMAGE_TOPIC,Image,queue_size=10)
+        self.edgesImagePub = rospy.Publisher(OUTPUT_IMAGE_TOPIC,Image,queue_size=10)
         self.lineCheckpoint = rospy.Publisher(OUTPUT_CHECKPOINT_TOPIC,Image,queue_size=10)
 
 
@@ -80,15 +80,52 @@ class LineDetector:
         # Define the ROS node execution rate
         self.rate = rospy.Rate(pub_rate)
 
+
+        # define edge detection filters:
+        self.sobelY = np.array([[-1,-2,-1], 
+                                [ 0, 0, 0], 
+                                [ 1, 2, 1]])
+
+        self.sobelX = np.array([[ -1, 0, 1], 
+                                [ -2, 0, 2], 
+                                [ -1, 0, 1]])     
+
+        # median filter
+        self.medianFilter = np.array([
+                                    [1/9,1/9,1/9],
+                                    [1/9,1/9,1/9],
+                                    [1/9,1/9,1/9]],dtype=np.uint8)   
+
     def imageCallback(self,msg):
         self.image = self.bridge.imgmsg_to_cv2(msg,desired_encoding="bgr8")
 
     def imagePreprocessing(self,img):
         gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
         gray = cv2.resize(gray,(self.imgWidth,self.imgHeight))
-        gray =cv2.GaussianBlur(gray,(7,7),0)
+        gray =cv2.GaussianBlur(gray,(5,5),0)
 
         return gray
+
+    def sliceImage(self,img):
+        return img[int(self.imgHeight/2):,:]
+
+    def edgeDetection(self,img):
+        """
+        canny = cv2.Canny(img,120,240)
+        retval, binary = cv2.threshold(canny, 127, 255, cv2.THRESH_BINARY)
+        contours,hierchy = cv2.findContours(canny,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+        contourImage = np.copy(img)
+        contourImage = cv2.drawContours(contourImage,contours,-1,(0,0,255),2)
+        """
+        filteredX = cv2.filter2D(img, -1, self.sobelX)
+        filteredY = cv2.filter2D(img, -1, self.sobelY)
+        overall = filteredX+filteredY
+        retval, binary = cv2.threshold(overall, 10, 255, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+        erotion = cv2.erode(src=binary,kernel=self.medianFilter ,iterations=1)
+        dilation = cv2.dilate(src=binary,kernel=self.medianFilter ,iterations=3)
+        return binary
+ 
+        
 
     def run(self):
         while not rospy.is_shutdown():
@@ -97,10 +134,16 @@ class LineDetector:
 
             frame = self.image
             preprocessedImage = self.imagePreprocessing(frame)
+            preprocessedImage = self.sliceImage(preprocessedImage)
+
+            binarized = self.edgeDetection(preprocessedImage)
 
             proprocessedOutput = self.bridge.cv2_to_imgmsg(preprocessedImage)
+            otherOutput = self.bridge.cv2_to_imgmsg(binarized)
 
             self.preprocessedImagePub.publish(proprocessedOutput)
+            self.edgesImagePub.publish(otherOutput)
+
 
 
 
