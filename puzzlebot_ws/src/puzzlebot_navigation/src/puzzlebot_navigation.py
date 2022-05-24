@@ -1,8 +1,10 @@
 #!/usr/bin/env python
+import cmd
 from distutils.log import error
 import rospy
 import actionlib
 from math import atan2, pi, sqrt
+from std_msgs.msg import Bool
 from geometry_msgs.msg import Pose2D, Twist
 from puzzlebot_msgs.msg import GoToPoseAction, GoToPoseFeedback, GoToPoseResult
 
@@ -13,9 +15,11 @@ linealVel = 0.1
 kp = 0.1
 kd = 0.1
 
-
 THETA_THRESHOLD = 10.0 * pi / 180.0
 DIST_THRESHOLD = 0.1
+
+ROS_RED_LIGHT_DETECT_TOPIC = '/puzzlebot_vision/traffic_lights/red_light'
+ROS_GREEN_LIGHT_DETECT_TOPIC = '/puzzlebot_vision/traffic_lights/green_light'
 
 class Navigator():
     def __init__(self):
@@ -23,7 +27,6 @@ class Navigator():
         self.pose2d.x = 0.0
         self.pose2d.y = 0.0
         self.pose2d.theta = 0.0
-
 
         ##########################################################################################################
         # TODO: Setup ROS subscribers and publishers, use the callback functions defined bellow if required. 
@@ -37,6 +40,15 @@ class Navigator():
 
         ##########################################################################################################
 
+        ##########################################################################################################
+        # TODO: Add the rospy Subscriber to get the red and green light flags
+        ##########################################################################################################
+
+        self.redLightFlag = rospy.Subscriber(ROS_RED_LIGHT_DETECT_TOPIC, Bool, self.redLightFlag_callback)
+        self.greenLightFlag = rospy.Subscriber(ROS_GREEN_LIGHT_DETECT_TOPIC, Bool, self.greenLightFlag_callback)
+
+        ##########################################################################################################
+
         rospy.init_node('puzzlebot_navigation')
 
         self.pub_rate = 0
@@ -46,15 +58,11 @@ class Navigator():
             rospy.loginfo("Rate value loaded from parameter server, value = %s", self.pub_rate)
         else:
             self.pub_rate = RATE
-
-
         if rospy.has_param('/puzzlebot_navigation/parameters/linearVel'):
             self.linealVel = rospy.get_param('/puzzlebot_navigation/parameters/linearVel')
             rospy.loginfo("Rate value loaded from parameter server, value = %s", self.linealVel)
         else:
             self.linealVel = linealVel
-
-
 
         ##########################################################################################################
         # TODO: Setup the Action Server, use adequate message types for the feedback and result of the action.
@@ -71,13 +79,17 @@ class Navigator():
         self.action.start()
         rospy.spin()
 
+    def redLightFlag_callback(self, msg):
+        self.redFlag = msg
+
+    def greenLightFlag_callback(self, msg):
+        self.greenFlag = msg
+
     def poseCallback(self, data):
         self.pose2d = data
 
-
     def euclideanDistance(self,xGoal,yGoal,x,y):
         return sqrt((yGoal - y)**2+(xGoal-x)**2)
-
 
     def positionalControl(self,x_goal,x_curr,theta_curr,y_goal,y_curr,cmd_vel):
             lastError = 0
@@ -105,8 +117,6 @@ class Navigator():
                 # compute distance:
                 distanceError = self.euclideanDistance(x_goal,x_curr,y_goal,y_curr)
 
-
-
     def orientationControl(self,theta_goal,theta_curr,cmd_vel):
         lastError = 0
         # orientationControl 
@@ -120,7 +130,6 @@ class Navigator():
             lastError = angularError
             angularError = theta_goal - theta_curr
 
-
     def resetCOmmand(self,cmd_vel):
         cmd_vel.linear.x = 0.0
         cmd_vel.linear.y = 0.0
@@ -129,8 +138,6 @@ class Navigator():
         cmd_vel.angular.y = 0.0
         cmd_vel.angular.z = 0.0
         self.pub.publish(cmd_vel)
-
-
 
     def actionCallback(self, goal):
 
@@ -143,28 +150,21 @@ class Navigator():
         y_goal = goal.goal_pose2d.y
         theta_goal = goal.goal_pose2d.theta
 
-
-
         ##########################################################################################################
 
         self.rate = rospy.Rate(self.pub_rate)
         success = False
 
         STATE = 0
-
+        GO = 1
 
         # positiona angular error
         angularErrorM = 3
         pastAngularErrorM = 3
 
-
-
         # orientation angular error
         angularError = 3
         pastAngularError = 3
-
-
-
 
         while not success:
             # If Action is canceled by other node, stop.
@@ -185,9 +185,6 @@ class Navigator():
             y_curr = self.pose2d.y
             theta_curr = self.pose2d.theta
 
-            
-
-
             ##########################################################################################################
             # TODO: Use the goal and current robot pose to modify the robot's linear and angular velocity.
             #       You shall only modify the linear.x and angular.z velocities.
@@ -195,107 +192,95 @@ class Navigator():
             #       Use the distance and theta thresholds to stop the vehicle trajectory or change between states.
             ##########################################################################################################
 
-            # Your code here...
+            # Your code here... 
             
-
-            if STATE == 0:
-                rospy.loginfo("State: %s | AngularErrorM %s",STATE,angularErrorM)
-                cmd_vel.linear.x = 0
-                # calculate angular error
-                xDiff = x_goal - x_curr
-                yDiff = y_goal - y_curr
-                thetaM = atan2(yDiff,xDiff)
-                # update error
-                pastAngularErrorM = angularErrorM
-                diff = thetaM - theta_curr
-                angularErrorM = abs(diff)
-
-
-                # establish angular velocity
-                controlAngularSpeed = kp * angularErrorM + kd * (angularErrorM-pastAngularErrorM)
-                # control angular velocity saturation
-                #factor = -1 if angularErrorM > pi else 1
-                if angularErrorM > pi and  diff > 0:
-                    factor = -1
-                elif angularErrorM > pi and  diff < 0:
-                    factor = 1
-                elif angularErrorM < pi and diff < 0:
-                    factor = -1
-                else: 
-                    factor = 1
-
-                cmd_vel.angular.z = factor * controlAngularSpeed if controlAngularSpeed <= 0.3 else 0.3 * factor
-                self.pub.publish(cmd_vel)
-                # compute distance:
-                if angularErrorM < THETA_THRESHOLD:
-                    STATE += 1 
-                    self.resetCOmmand(cmd_vel)
-                    
-            
-            elif STATE == 1:
-                cmd_vel.linear.x = linealVel
-                # calculate angular error
-                xDiff = x_goal - x_curr
-                yDiff = y_goal - y_curr
-                thetaM = atan2(yDiff,xDiff)
-                # update error
-                pastAngularErrorM = angularErrorM
-                diff = thetaM - theta_curr
-                angularErrorM = abs(diff)
-
-                # establish angular velocity
-                controlAngularSpeed = kp * angularErrorM + kd * (angularErrorM-pastAngularErrorM)
-                # control angular velocity saturation
-                if angularErrorM > pi and  diff > 0:
-                    factor = -1
-                elif angularErrorM > pi and  diff < 0:
-                    factor = 1
-                elif angularErrorM < pi and diff < 0:
-                    factor = -1
-                else: 
-                    factor = 1
-
-                cmd_vel.angular.z = factor * controlAngularSpeed if controlAngularSpeed <= 0.3 else 0.3 * factor
-                self.pub.publish(cmd_vel)
-                # compute distance:
-                distanceError = self.euclideanDistance(x_goal,y_goal,x_curr,y_curr)
-                rospy.loginfo("State: %s | Distance Error %s",STATE,distanceError)
-                if distanceError < DIST_THRESHOLD:
-                    STATE += 1
-                    self.resetCOmmand(cmd_vel)
-                    
-
-
-
-            
+            if self.greenFlag and not self.redFlag:
+                GO = 1
+            if self.redFlag:
+                GO = 0
+            if GO == 1:
+                if STATE == 0:
+                    rospy.loginfo("State: %s | AngularErrorM %s",STATE,angularErrorM)
+                    cmd_vel.linear.x = 0
+                    # calculate angular error
+                    xDiff = x_goal - x_curr
+                    yDiff = y_goal - y_curr
+                    thetaM = atan2(yDiff,xDiff)
+                    # update error
+                    pastAngularErrorM = angularErrorM
+                    diff = thetaM - theta_curr
+                    angularErrorM = abs(diff)
+                    # establish angular velocity
+                    controlAngularSpeed = kp * angularErrorM + kd * (angularErrorM-pastAngularErrorM)
+                    # control angular velocity saturation
+                    if angularErrorM > pi and  diff > 0:
+                        factor = -1
+                    elif angularErrorM > pi and  diff < 0:
+                        factor = 1
+                    elif angularErrorM < pi and diff < 0:
+                        factor = -1
+                    else: 
+                        factor = 1
+                    cmd_vel.angular.z = factor * controlAngularSpeed if controlAngularSpeed <= 0.3 else 0.3 * factor
+                    self.pub.publish(cmd_vel)
+                    # compute distance:
+                    if angularErrorM < THETA_THRESHOLD:
+                        STATE += 1 
+                        self.resetCOmmand(cmd_vel)
+                elif STATE == 1:
+                    cmd_vel.linear.x = linealVel
+                    # calculate angular error
+                    xDiff = x_goal - x_curr
+                    yDiff = y_goal - y_curr
+                    thetaM = atan2(yDiff,xDiff)
+                    # update error
+                    pastAngularErrorM = angularErrorM
+                    diff = thetaM - theta_curr
+                    angularErrorM = abs(diff)
+                    # establish angular velocity
+                    controlAngularSpeed = kp * angularErrorM + kd * (angularErrorM-pastAngularErrorM)
+                    # control angular velocity saturation
+                    if angularErrorM > pi and  diff > 0:
+                        factor = -1
+                    elif angularErrorM > pi and  diff < 0:
+                        factor = 1
+                    elif angularErrorM < pi and diff < 0:
+                        factor = -1
+                    else: 
+                        factor = 1
+                    cmd_vel.angular.z = factor * controlAngularSpeed if controlAngularSpeed <= 0.3 else 0.3 * factor
+                    self.pub.publish(cmd_vel)
+                    # compute distance:
+                    distanceError = self.euclideanDistance(x_goal,y_goal,x_curr,y_curr)
+                    rospy.loginfo("State: %s | Distance Error %s",STATE,distanceError)
+                    if distanceError < DIST_THRESHOLD:
+                        STATE += 1
+                        self.resetCOmmand(cmd_vel)
+                else:
+                    pastAngularError = angularError
+                    diff = theta_goal - theta_curr
+                    angularError = abs(diff)
+                    rospy.loginfo("State: %s | Orientation Error %s",STATE,angularError)
+                    controlAngularSpeed2 = kp * angularError + kd * (angularError-pastAngularError)
+                    cmd_vel.linear.x = 0
+                    if angularError > pi and  diff > 0:
+                        factor = -1
+                    elif angularError > pi and  diff < 0:
+                        factor = 1
+                    elif angularError < pi and diff < 0:
+                        factor = -1
+                    else: 
+                        factor = 1
+                    cmd_vel.angular.z = controlAngularSpeed2 * factor if controlAngularSpeed2 <= 0.3 else 0.3 * factor
+                    self.pub.publish(cmd_vel)
+                    rospy.loginfo(angularError)
+                    if angularError < THETA_THRESHOLD:
+                        self.resetCOmmand(cmd_vel)
+                        success = True
+                        STATE = 0
             else:
-                pastAngularError = angularError
-                diff = theta_goal - theta_curr
-                angularError = abs(diff)
-                rospy.loginfo("State: %s | Orientation Error %s",STATE,angularError)
-                controlAngularSpeed2 = kp * angularError + kd * (angularError-pastAngularError)
+                cmd_vel.angular.z = 0
                 cmd_vel.linear.x = 0
-
-                if angularError > pi and  diff > 0:
-                    factor = -1
-                elif angularError > pi and  diff < 0:
-                    factor = 1
-                elif angularError < pi and diff < 0:
-                    factor = -1
-                else: 
-                    factor = 1
-
-                cmd_vel.angular.z = controlAngularSpeed2 * factor if controlAngularSpeed2 <= 0.3 else 0.3 * factor
-                self.pub.publish(cmd_vel)
-                rospy.loginfo(angularError)
-                if angularError < THETA_THRESHOLD:
-                    self.resetCOmmand(cmd_vel)
-                    success = True
-                    STATE = 0
-
-            
-
-
 
 
             ##########################################################################################################
@@ -310,9 +295,6 @@ class Navigator():
             self.result.success = True
             self.action.set_succeeded(self.result)
             #self.resetCOmmand(cmd_vel)
-
-
-
 
 if __name__ == '__main__':
     try:
