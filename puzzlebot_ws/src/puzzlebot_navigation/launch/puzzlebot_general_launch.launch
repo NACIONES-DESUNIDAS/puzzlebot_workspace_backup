@@ -1,0 +1,18 @@
+<launch>
+    <node pkg="puzzlebot_navigation" type="puzzlebot_odometry.py" name="robot_odometry"/>
+    <node pkg="puzzlebot_navigation" type="puzzlebot_navigation.py" name="robot_navigation" output = "screen"/>
+    <rosparam command="load" file="$(find puzzlebot_navigation)/config/puzzlebot_navigation.yaml" />
+    <!-- Load the parameters defined in the puzzlebot_vision configuration file to the parameter server -->
+    
+    
+    <rosparam command="load" file="$(find puzzlebot_vision)/config/puzzlebot_vision.yaml"/> 
+    <node pkg="puzzlebot_run" type="puzzlebot_run.py" name="run"/>
+
+    <!-- Initialize the Puzzle-Bot camera node using the adequate launch file -->
+    <include file="$(find ros_deep_learning)/launch/video_source.ros1.launch"/>
+
+    <!-- Run the created puzzlebot_vision node that will process the camera Image messages -->
+    <node name="puzzlebot_traffic_lights" pkg="puzzlebot_vision" type="puzzlebot_traffic_lights.py"/>    
+
+
+</launch>
