@@ -24,10 +24,13 @@ class Puzzlebot_Grapher:
         self.array = msg.data
 
     def run(self):
+        plt.figure()
         while not rospy.is_shutdown():
             if self.array is None:
                 self.rate.sleep()
-            rospy.loginfo(self.array.shape)
+            plt.plot(self.array)
+            plt.pause(0.05)
+            plt.clf()
 
 
 if __name__ == '__main__':
