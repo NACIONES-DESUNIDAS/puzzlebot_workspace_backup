@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <!-- Run the created puzzlebot_vision node that will process the camera Image messages -->
+    <node name="puzzlebot_grapher" pkg="puzzlebot_graphs" type="plot_sum_histogram.py" output="screen"/>
+</launch>

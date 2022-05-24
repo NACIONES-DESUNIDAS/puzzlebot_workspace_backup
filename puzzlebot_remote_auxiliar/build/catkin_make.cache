@@ -1,0 +1,2 @@
+
+-DCATKIN_DEVEL_PREFIX=/home/luis/Documents/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/devel -DCMAKE_INSTALL_PREFIX=/home/luis/Documents/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/install -G Unix Makefiles

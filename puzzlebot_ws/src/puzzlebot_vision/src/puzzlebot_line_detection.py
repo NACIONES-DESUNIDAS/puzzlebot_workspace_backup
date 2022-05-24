@@ -4,6 +4,13 @@ import numpy as np
 import rospy, cv_bridge
 from sensor_msgs.msg import Image
 from std_msgs.msg import Float32
+from rospy.numpy_msg import numpy_msg
+from rospy_tutorials.msg import Floats
+
+
+
+
+
 
 # the place that we use to fetch stuff
 ROS_PARAMS = '/puzzlebot_vision/line_detection/parameters'
@@ -45,6 +52,8 @@ class LineDetector:
 
 
 
+
+
         # try to fetch image scale factors
 
         if rospy.has_param(ROS_PARAMS + '/image_width'):
@@ -66,9 +75,12 @@ class LineDetector:
         self.image = None
 
         # publishers
-        self.preprocessedImagePub = rospy.Publisher(OUTPUT_PREPROCESSED_IMAGE_TOPIC,Image,queue_size=10)
-        self.edgesImagePub = rospy.Publisher(OUTPUT_IMAGE_TOPIC,Image,queue_size=10)
-        self.lineCheckpoint = rospy.Publisher(OUTPUT_CHECKPOINT_TOPIC,Image,queue_size=10)
+        self.preprocessedImagePub = rospy.Publisher(OUTPUT_PREPROCESSED_IMAGE_TOPIC,Image,queue_size=10) # preprocessed image
+        self.edgesImagePub = rospy.Publisher(OUTPUT_IMAGE_TOPIC,Image,queue_size=10) # edge detection (debug)
+        self.lineCheckpoint = rospy.Publisher(OUTPUT_CHECKPOINT_TOPIC,Image,queue_size=1) # reference
+        self.verticalSumPub = rospy.Publisher("/vertical_sum",numpy_msg(Floats),queue_size=10)
+
+
 
 
         # subscribers 
@@ -101,13 +113,18 @@ class LineDetector:
 
     def imagePreprocessing(self,img):
         gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-        gray = cv2.resize(gray,(self.imgWidth,self.imgHeight))
+        gray = cv2.resize(gray,(480,360))
         gray =cv2.GaussianBlur(gray,(5,5),0)
-
         return gray
 
     def sliceImage(self,img):
-        return img[int(self.imgHeight/2):,:]
+        return img[int(self.imgHeight*0.80):,:]
+
+    def sumVertically(self,img):
+        sum = img.sum(axis = 0)
+        sum = np.float32(sum)
+        return sum
+
 
     def edgeDetection(self,img):
         """
@@ -117,33 +134,58 @@ class LineDetector:
         contourImage = np.copy(img)
         contourImage = cv2.drawContours(contourImage,contours,-1,(0,0,255),2)
         """
+        """
         filteredX = cv2.filter2D(img, -1, self.sobelX)
         filteredY = cv2.filter2D(img, -1, self.sobelY)
         overall = filteredX+filteredY
         retval, binary = cv2.threshold(overall, 10, 255, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
         erotion = cv2.erode(src=binary,kernel=self.medianFilter ,iterations=1)
-        dilation = cv2.dilate(src=binary,kernel=self.medianFilter ,iterations=3)
-        return binary
- 
+        binarized = cv2.dilate(src=binary,kernel=self.medianFilter ,iterations=3)
+        """
+        
+        retval, binary = cv2.threshold(img, 10, 255, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+        erotion = cv2.erode(src=binary,kernel=self.medianFilter ,iterations=1)
+        dilation = cv2.dilate(src=binary,kernel=self.medianFilter ,iterations=4)
+        binarized = self.createImageMask(img,0,retval)
+        
+        return binarized
+        
+
+
+
+    def createImageMask(self,image,lowerBound,upperBound):
+        return  cv2.inRange(image, lowerBound, upperBound)
+
+
+        
+
         
 
     def run(self):
+        #blackLower = np.array([0])
+        #blackHigher = np.array([20])
         while not rospy.is_shutdown():
             if self.image is None:
                 self.rate.sleep()
 
             frame = self.image
-            preprocessedImage = self.imagePreprocessing(frame)
-            preprocessedImage = self.sliceImage(preprocessedImage)
 
+            # preprocess image
+            preprocessedImage = self.imagePreprocessing(frame)
+            # slice image (region of interest)
+            preprocessedImage = self.sliceImage(preprocessedImage)
+            # sum columns vertically
+            vertSum = self.sumVertically(preprocessedImage)
+            # binarize
             binarized = self.edgeDetection(preprocessedImage)
+
 
             proprocessedOutput = self.bridge.cv2_to_imgmsg(preprocessedImage)
             otherOutput = self.bridge.cv2_to_imgmsg(binarized)
 
             self.preprocessedImagePub.publish(proprocessedOutput)
             self.edgesImagePub.publish(otherOutput)
-
+            self.verticalSumPub.publish(vertSum)
 
 
 

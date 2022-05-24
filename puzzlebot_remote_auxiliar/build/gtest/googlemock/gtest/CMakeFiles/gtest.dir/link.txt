@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC   -shared -Wl,-soname,libgtest.so -o libgtest.so CMakeFiles/gtest.dir/src/gtest-all.cc.o  -L/home/luis/Documents/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/build/gtest/googlemock/gtest/src -Wl,-rpath,/home/luis/Documents/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/build/gtest/googlemock/gtest/src -lpthread 
