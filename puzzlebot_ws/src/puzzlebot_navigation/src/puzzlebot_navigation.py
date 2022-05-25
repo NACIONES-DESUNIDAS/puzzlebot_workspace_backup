@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from distutils.log import error
+from pickle import FALSE
 import rospy
 import actionlib
 from math import atan2, pi, sqrt
@@ -301,18 +302,25 @@ class Navigator():
                     factor = 1
 
                 if self.redFlag:
-                    self.resetCOmmand(cmd_vel)
-                    """
-                    while True:
-                        self.resetCOmmand(cmd_vel)
-                        if self.greenFlag:
-                            cmd_vel.linear.x = linealVel
-                            self.pub(cmd_vel)
-                            break
-                    """
+                    #self.resetCOmmand(cmd_vel)
+                    
+                    while self.greenFlag == False:
+                        rospy.loginfo("Enter Red Stop")
+                        cmd_vel.linear.x = 0.0
+                        self.pub.publish(cmd_vel)
+                    cmd_vel.linear.x = self.linealVel
+                    self.pub.publish(cmd_vel)
+                    rospy.loginfo("Enter Red Stop")
 
-                elif self.greenFlag and not self.redFlag:
-                    cmd_vel.linear.x = linealVel
+                        #self.resetCOmmand(cmd_vel)
+                        #if self.greenFlag and not self.redFlag:
+                            #cmd_vel.linear.x = linealVel
+                            #self.pub(cmd_vel)
+                            #break
+                    
+
+                #elif self.greenFlag and not self.redFlag:
+                    #cmd_vel.linear.x = linealVel
                 else:
                     cmd_vel.angular.z = factor * controlAngularSpeed if controlAngularSpeed <= 0.3 else 0.3 * factor
                     cmd_vel.linear.x = linealVel
