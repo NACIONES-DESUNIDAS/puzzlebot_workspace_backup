@@ -7,7 +7,5 @@
 # new environment variables
 
 # modified environment variables
-export CMAKE_PREFIX_PATH="/home/luis/Documents/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/devel:$CMAKE_PREFIX_PATH"
-export PWD='/home/luis/Documents/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/build'
-export ROSLISP_PACKAGE_DIRECTORIES='/home/luis/Documents/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/devel/share/common-lisp'
-export ROS_PACKAGE_PATH="/home/luis/Documents/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/src:$ROS_PACKAGE_PATH"
+export PWD='/home/luisfe/Documents/Puzzlebot_Semaforo/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/build'
+export ROS_PACKAGE_PATH='/home/luisfe/Documents/Puzzlebot_Semaforo/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/src:/opt/ros/melodic/share'

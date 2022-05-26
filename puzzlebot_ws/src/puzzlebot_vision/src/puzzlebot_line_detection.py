@@ -6,6 +6,7 @@ from sensor_msgs.msg import Image
 from std_msgs.msg import Float32
 from rospy.numpy_msg import numpy_msg
 from rospy_tutorials.msg import Floats
+from std_msgs.msg import Int32MultiArray
 
 
 
@@ -78,7 +79,9 @@ class LineDetector:
         self.preprocessedImagePub = rospy.Publisher(OUTPUT_PREPROCESSED_IMAGE_TOPIC,Image,queue_size=10) # preprocessed image
         self.edgesImagePub = rospy.Publisher(OUTPUT_IMAGE_TOPIC,Image,queue_size=10) # edge detection (debug)
         self.lineCheckpoint = rospy.Publisher(OUTPUT_CHECKPOINT_TOPIC,Image,queue_size=1) # reference
-        self.verticalSumPub = rospy.Publisher("/vertical_sum",numpy_msg(Floats),queue_size=10)
+        #self.verticalSumPub = rospy.Publisher("/vertical_sum",numpy_msg(Floats),queue_size=10)
+        self.verticalSumPub = rospy.Publisher("/vertical_sum",Int32MultiArray,queue_size=10)
+
 
 
 
@@ -122,7 +125,9 @@ class LineDetector:
 
     def sumVertically(self,img):
         sum = img.sum(axis = 0)
-        sum = np.float32(sum)
+        #rospy.loginfo(type(sum))
+        #sum2 = np.gradient(sum)
+        #rospy.loginfo(type(sum))
         return sum
 
 
@@ -176,6 +181,7 @@ class LineDetector:
             preprocessedImage = self.sliceImage(preprocessedImage)
             # sum columns vertically
             vertSum = self.sumVertically(preprocessedImage)
+
             # binarize
             binarized = self.edgeDetection(preprocessedImage)
 
@@ -183,9 +189,13 @@ class LineDetector:
             proprocessedOutput = self.bridge.cv2_to_imgmsg(preprocessedImage)
             otherOutput = self.bridge.cv2_to_imgmsg(binarized)
 
+            arrayMessage = Int32MultiArray()
+            arrayMessage.data = vertSum
+
             self.preprocessedImagePub.publish(proprocessedOutput)
             self.edgesImagePub.publish(otherOutput)
-            self.verticalSumPub.publish(vertSum)
+            self.verticalSumPub.publish(arrayMessage)
+
 
 
 
