@@ -3,7 +3,7 @@
 
 # Relative path conversion top directories.
 set(CMAKE_RELATIVE_PATH_TOP_SOURCE "/usr/src/googletest")
-set(CMAKE_RELATIVE_PATH_TOP_BINARY "/home/luisfe/Documents/Puzzlebot_Semaforo/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/build")
+set(CMAKE_RELATIVE_PATH_TOP_BINARY "/home/luis/Documents/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/build")
 
 # Force unix paths in dependencies.
 set(CMAKE_FORCE_UNIX_PATHS 1)

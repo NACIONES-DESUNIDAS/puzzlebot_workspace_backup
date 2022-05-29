@@ -7,5 +7,7 @@
 # new environment variables
 
 # modified environment variables
-export PWD='/home/luisfe/Documents/Puzzlebot_Semaforo/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/build'
-export ROS_PACKAGE_PATH='/home/luisfe/Documents/Puzzlebot_Semaforo/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/src:/opt/ros/melodic/share'
+export LD_LIBRARY_PATH='/opt/ros/melodic/lib'
+export PKG_CONFIG_PATH='/opt/ros/melodic/lib/pkgconfig'
+export PWD='/home/luis/Documents/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/build'
+export ROS_PACKAGE_PATH='/home/luis/Documents/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/src:/opt/ros/melodic/share'

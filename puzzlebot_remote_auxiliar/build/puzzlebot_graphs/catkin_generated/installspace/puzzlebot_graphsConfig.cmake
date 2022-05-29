@@ -67,14 +67,14 @@ set(puzzlebot_graphs_CONFIG_INCLUDED TRUE)
 
 # set variables for source/devel/install prefixes
 if("FALSE" STREQUAL "TRUE")
-  set(puzzlebot_graphs_SOURCE_PREFIX /home/luisfe/Documents/Puzzlebot_Semaforo/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/src/puzzlebot_graphs)
-  set(puzzlebot_graphs_DEVEL_PREFIX /home/luisfe/Documents/Puzzlebot_Semaforo/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/devel)
+  set(puzzlebot_graphs_SOURCE_PREFIX /home/luis/Documents/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/src/puzzlebot_graphs)
+  set(puzzlebot_graphs_DEVEL_PREFIX /home/luis/Documents/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/devel)
   set(puzzlebot_graphs_INSTALL_PREFIX "")
   set(puzzlebot_graphs_PREFIX ${puzzlebot_graphs_DEVEL_PREFIX})
 else()
   set(puzzlebot_graphs_SOURCE_PREFIX "")
   set(puzzlebot_graphs_DEVEL_PREFIX "")
-  set(puzzlebot_graphs_INSTALL_PREFIX /home/luisfe/Documents/Puzzlebot_Semaforo/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/install)
+  set(puzzlebot_graphs_INSTALL_PREFIX /home/luis/Documents/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/install)
   set(puzzlebot_graphs_PREFIX ${puzzlebot_graphs_INSTALL_PREFIX})
 endif()
 
@@ -154,7 +154,7 @@ foreach(library ${libraries})
     set(lib_path "")
     set(lib "${library}-NOTFOUND")
     # since the path where the library is found is returned we have to iterate over the paths manually
-    foreach(path /home/luisfe/Documents/Puzzlebot_Semaforo/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/install/lib;/home/luisfe/Documents/Puzzlebot_Semaforo/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/devel/lib;/opt/ros/melodic/lib)
+    foreach(path /home/luis/Documents/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/install/lib;/home/luis/Documents/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/devel/lib;/opt/ros/melodic/lib)
       find_library(lib ${library}
         PATHS ${path}
         NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)

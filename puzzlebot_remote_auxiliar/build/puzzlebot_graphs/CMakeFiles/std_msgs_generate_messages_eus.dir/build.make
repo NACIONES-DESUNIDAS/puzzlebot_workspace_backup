@@ -43,10 +43,10 @@ RM = /usr/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/luisfe/Documents/Puzzlebot_Semaforo/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/src
+CMAKE_SOURCE_DIR = /home/luis/Documents/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/src
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/luisfe/Documents/Puzzlebot_Semaforo/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/build
+CMAKE_BINARY_DIR = /home/luis/Documents/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/build
 
 # Utility rule file for std_msgs_generate_messages_eus.
 
@@ -63,10 +63,10 @@ puzzlebot_graphs/CMakeFiles/std_msgs_generate_messages_eus.dir/build: std_msgs_g
 .PHONY : puzzlebot_graphs/CMakeFiles/std_msgs_generate_messages_eus.dir/build
 
 puzzlebot_graphs/CMakeFiles/std_msgs_generate_messages_eus.dir/clean:
-	cd /home/luisfe/Documents/Puzzlebot_Semaforo/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/build/puzzlebot_graphs && $(CMAKE_COMMAND) -P CMakeFiles/std_msgs_generate_messages_eus.dir/cmake_clean.cmake
+	cd /home/luis/Documents/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/build/puzzlebot_graphs && $(CMAKE_COMMAND) -P CMakeFiles/std_msgs_generate_messages_eus.dir/cmake_clean.cmake
 .PHONY : puzzlebot_graphs/CMakeFiles/std_msgs_generate_messages_eus.dir/clean
 
 puzzlebot_graphs/CMakeFiles/std_msgs_generate_messages_eus.dir/depend:
-	cd /home/luisfe/Documents/Puzzlebot_Semaforo/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/luisfe/Documents/Puzzlebot_Semaforo/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/src /home/luisfe/Documents/Puzzlebot_Semaforo/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/src/puzzlebot_graphs /home/luisfe/Documents/Puzzlebot_Semaforo/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/build /home/luisfe/Documents/Puzzlebot_Semaforo/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/build/puzzlebot_graphs /home/luisfe/Documents/Puzzlebot_Semaforo/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/build/puzzlebot_graphs/CMakeFiles/std_msgs_generate_messages_eus.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/luis/Documents/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/luis/Documents/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/src /home/luis/Documents/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/src/puzzlebot_graphs /home/luis/Documents/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/build /home/luis/Documents/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/build/puzzlebot_graphs /home/luis/Documents/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/build/puzzlebot_graphs/CMakeFiles/std_msgs_generate_messages_eus.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : puzzlebot_graphs/CMakeFiles/std_msgs_generate_messages_eus.dir/depend
 

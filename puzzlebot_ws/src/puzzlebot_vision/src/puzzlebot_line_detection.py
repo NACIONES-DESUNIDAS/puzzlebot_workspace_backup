@@ -107,9 +107,9 @@ class LineDetector:
 
         # median filter
         self.medianFilter = np.array([
-                                    [1/9,1/9,1/9],
-                                    [1/9,1/9,1/9],
-                                    [1/9,1/9,1/9]],dtype=np.uint8)   
+                                    [1,1,1],
+                                    [1,1,1],
+                                    [1,1,1]],dtype=np.uint8)   
 
     def imageCallback(self,msg):
         self.image = self.bridge.imgmsg_to_cv2(msg,desired_encoding="bgr8")
@@ -118,6 +118,8 @@ class LineDetector:
         gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
         gray = cv2.resize(gray,(480,360))
         gray =cv2.GaussianBlur(gray,(5,5),0)
+        gray = cv2.erode(src=gray,kernel=self.medianFilter ,iterations=4)
+        gray = cv2.dilate(src=gray,kernel=self.medianFilter ,iterations=3)
         return gray
 
     def sliceImage(self,img):
@@ -150,7 +152,7 @@ class LineDetector:
         
         retval, binary = cv2.threshold(img, 10, 255, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
         erotion = cv2.erode(src=binary,kernel=self.medianFilter ,iterations=1)
-        dilation = cv2.dilate(src=binary,kernel=self.medianFilter ,iterations=4)
+        dilation = cv2.dilate(src=binary,kernel=self.medianFilter ,iterations=1)
         binarized = self.createImageMask(img,0,retval)
         
         return binarized
@@ -195,6 +197,7 @@ class LineDetector:
             self.preprocessedImagePub.publish(proprocessedOutput)
             self.edgesImagePub.publish(otherOutput)
             self.verticalSumPub.publish(arrayMessage)
+            #rospy.loginfo(vertSum.shape)
 
 
 

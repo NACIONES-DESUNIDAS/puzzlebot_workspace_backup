@@ -1,8 +1,8 @@
-# Install script for directory: /home/luisfe/Documents/Puzzlebot_Semaforo/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/src/puzzlebot_graphs
+# Install script for directory: /home/luis/Documents/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/src/puzzlebot_graphs
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
-  set(CMAKE_INSTALL_PREFIX "/home/luisfe/Documents/Puzzlebot_Semaforo/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/install")
+  set(CMAKE_INSTALL_PREFIX "/home/luis/Documents/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/install")
 endif()
 string(REGEX REPLACE "/$" "" CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 
@@ -38,17 +38,17 @@ if(NOT DEFINED CMAKE_CROSSCOMPILING)
 endif()
 
 if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_COMPONENT)
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/pkgconfig" TYPE FILE FILES "/home/luisfe/Documents/Puzzlebot_Semaforo/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/build/puzzlebot_graphs/catkin_generated/installspace/puzzlebot_graphs.pc")
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/pkgconfig" TYPE FILE FILES "/home/luis/Documents/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/build/puzzlebot_graphs/catkin_generated/installspace/puzzlebot_graphs.pc")
 endif()
 
 if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_COMPONENT)
   file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/puzzlebot_graphs/cmake" TYPE FILE FILES
-    "/home/luisfe/Documents/Puzzlebot_Semaforo/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/build/puzzlebot_graphs/catkin_generated/installspace/puzzlebot_graphsConfig.cmake"
-    "/home/luisfe/Documents/Puzzlebot_Semaforo/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/build/puzzlebot_graphs/catkin_generated/installspace/puzzlebot_graphsConfig-version.cmake"
+    "/home/luis/Documents/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/build/puzzlebot_graphs/catkin_generated/installspace/puzzlebot_graphsConfig.cmake"
+    "/home/luis/Documents/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/build/puzzlebot_graphs/catkin_generated/installspace/puzzlebot_graphsConfig-version.cmake"
     )
 endif()
 
 if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_COMPONENT)
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/puzzlebot_graphs" TYPE FILE FILES "/home/luisfe/Documents/Puzzlebot_Semaforo/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/src/puzzlebot_graphs/package.xml")
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/puzzlebot_graphs" TYPE FILE FILES "/home/luis/Documents/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/src/puzzlebot_graphs/package.xml")
 endif()
 

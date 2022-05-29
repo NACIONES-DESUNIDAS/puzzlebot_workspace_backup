@@ -43,10 +43,10 @@ RM = /usr/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/luisfe/Documents/Puzzlebot_Semaforo/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/src
+CMAKE_SOURCE_DIR = /home/luis/Documents/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/src
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/luisfe/Documents/Puzzlebot_Semaforo/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/build
+CMAKE_BINARY_DIR = /home/luis/Documents/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/build
 
 # Utility rule file for sensor_msgs_generate_messages_nodejs.
 
@@ -63,10 +63,10 @@ puzzlebot_graphs/CMakeFiles/sensor_msgs_generate_messages_nodejs.dir/build: sens
 .PHONY : puzzlebot_graphs/CMakeFiles/sensor_msgs_generate_messages_nodejs.dir/build
 
 puzzlebot_graphs/CMakeFiles/sensor_msgs_generate_messages_nodejs.dir/clean:
-	cd /home/luisfe/Documents/Puzzlebot_Semaforo/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/build/puzzlebot_graphs && $(CMAKE_COMMAND) -P CMakeFiles/sensor_msgs_generate_messages_nodejs.dir/cmake_clean.cmake
+	cd /home/luis/Documents/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/build/puzzlebot_graphs && $(CMAKE_COMMAND) -P CMakeFiles/sensor_msgs_generate_messages_nodejs.dir/cmake_clean.cmake
 .PHONY : puzzlebot_graphs/CMakeFiles/sensor_msgs_generate_messages_nodejs.dir/clean
 
 puzzlebot_graphs/CMakeFiles/sensor_msgs_generate_messages_nodejs.dir/depend:
-	cd /home/luisfe/Documents/Puzzlebot_Semaforo/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/luisfe/Documents/Puzzlebot_Semaforo/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/src /home/luisfe/Documents/Puzzlebot_Semaforo/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/src/puzzlebot_graphs /home/luisfe/Documents/Puzzlebot_Semaforo/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/build /home/luisfe/Documents/Puzzlebot_Semaforo/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/build/puzzlebot_graphs /home/luisfe/Documents/Puzzlebot_Semaforo/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/build/puzzlebot_graphs/CMakeFiles/sensor_msgs_generate_messages_nodejs.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/luis/Documents/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/luis/Documents/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/src /home/luis/Documents/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/src/puzzlebot_graphs /home/luis/Documents/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/build /home/luis/Documents/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/build/puzzlebot_graphs /home/luis/Documents/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/build/puzzlebot_graphs/CMakeFiles/sensor_msgs_generate_messages_nodejs.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : puzzlebot_graphs/CMakeFiles/sensor_msgs_generate_messages_nodejs.dir/depend
 

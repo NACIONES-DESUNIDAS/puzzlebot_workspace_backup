@@ -4,5 +4,5 @@ PROJECT_PKG_CONFIG_INCLUDE_DIRS = "".split(';') if "" != "" else []
 PROJECT_CATKIN_DEPENDS = "".replace(';', ' ')
 PKG_CONFIG_LIBRARIES_WITH_PREFIX = "".split(';') if "" != "" else []
 PROJECT_NAME = "puzzlebot_graphs"
-PROJECT_SPACE_DIR = "/home/luisfe/Documents/Puzzlebot_Semaforo/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/devel"
+PROJECT_SPACE_DIR = "/home/luis/Documents/puzzlebot_workspace_backup/puzzlebot_remote_auxiliar/devel"
 PROJECT_VERSION = "0.0.0"
