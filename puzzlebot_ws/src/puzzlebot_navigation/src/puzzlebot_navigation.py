@@ -6,7 +6,7 @@ import actionlib
 from math import atan2, pi, sqrt
 from geometry_msgs.msg import Pose2D, Twist
 from std_msgs.msg import Bool
-from puzzlebot_msgs.msg import GoToPoseAction, GoToPoseFeedback, GoToPoseResult
+from puzzlebot_msgs.msg import GoToPoseAction, GoToPoseFeedback, GoToPoseResult, Float32MultiArray
 
 RATE   =  10
 
@@ -14,7 +14,6 @@ RATE   =  10
 linealVel = 0.1
 kp = 0.1
 kd = 0.1
-
 
 THETA_THRESHOLD = 10.0 * pi / 180.0
 DIST_THRESHOLD = 0.1
@@ -29,7 +28,6 @@ class Navigator():
         self.pose2d.y = 0.0
         self.pose2d.theta = 0.0
 
-
         ##########################################################################################################
         # TODO: Setup ROS subscribers and publishers, use the callback functions defined bellow if required. 
         #       Your node must subscribe to your previously defined /pose2d named topic, to obtain the current robot's current estimated position info.
@@ -39,6 +37,8 @@ class Navigator():
         # Your code here...
         self.pub = rospy.Publisher("/cmd_vel",Twist,queue_size=1)
         self.poseRecb = rospy.Subscriber("/pose2d",Pose2D,self.poseCallback)
+        self.leftEdgeSubscriber = rospy.Subscriber("/leftEdge", Float32MultiArray, self.leftEdgeCallback)
+        self.rightEdgeSubscriber = rospy.Subscriber("/rightEdge", Float32MultiArray, self.rightEdgeCallback)
 
         ##########################################################################################################
 
@@ -52,16 +52,11 @@ class Navigator():
         else:
             self.pub_rate = RATE
 
-
         if rospy.has_param('/puzzlebot_navigation/parameters/linearVel'):
             self.linealVel = rospy.get_param('/puzzlebot_navigation/parameters/linearVel')
             rospy.loginfo("Rate value loaded from parameter server, value = %s", self.linealVel)
         else:
             self.linealVel = linealVel
-
-
-
-
 
         ##########################################################################################################
         # TODO: Add the rospy Subscriber to get the red and green light flags
@@ -74,10 +69,6 @@ class Navigator():
         self.greenFlag = Bool()
 
         ##########################################################################################################
-
-
-
-
 
         ##########################################################################################################
         # TODO: Setup the Action Server, use adequate message types for the feedback and result of the action.
@@ -98,20 +89,21 @@ class Navigator():
         self.redFlag = msg.data
         rospy.loginfo("Red: %s",self.redFlag)
 
-
-
     def greenLightFlag_callback(self, msg):
         self.greenFlag = msg.data
         rospy.loginfo("Green: %s",self.greenFlag)
 
-
     def poseCallback(self, data):
         self.pose2d = data
 
+    def rightEdgeCallback(self, msg):
+        self.rightEdges = msg.data
+
+    def leftEdgeCallback(self, msg):
+        self.leftEdges = msg.data
 
     def euclideanDistance(self,xGoal,yGoal,x,y):
         return sqrt((yGoal - y)**2+(xGoal-x)**2)
-
 
     def positionalControl(self,x_goal,x_curr,theta_curr,y_goal,y_curr,cmd_vel):
             lastError = 0
@@ -139,8 +131,6 @@ class Navigator():
                 # compute distance:
                 distanceError = self.euclideanDistance(x_goal,x_curr,y_goal,y_curr)
 
-
-
     def orientationControl(self,theta_goal,theta_curr,cmd_vel):
         lastError = 0
         # orientationControl 
@@ -154,7 +144,6 @@ class Navigator():
             lastError = angularError
             angularError = theta_goal - theta_curr
 
-
     def resetCOmmand(self,cmd_vel):
         cmd_vel.linear.x = 0.0
         cmd_vel.linear.y = 0.0
@@ -163,8 +152,6 @@ class Navigator():
         cmd_vel.angular.y = 0.0
         cmd_vel.angular.z = 0.0
         self.pub.publish(cmd_vel)
-
-
 
     def actionCallback(self, goal):
 
@@ -177,8 +164,6 @@ class Navigator():
         y_goal = goal.goal_pose2d.y
         theta_goal = goal.goal_pose2d.theta
 
-
-
         ##########################################################################################################
 
         self.rate = rospy.Rate(self.pub_rate)
@@ -186,19 +171,13 @@ class Navigator():
 
         STATE = 0
 
-
         # positiona angular error
         angularErrorM = 3
         pastAngularErrorM = 3
 
-
-
         # orientation angular error
         angularError = 3
         pastAngularError = 3
-
-
-
 
         while not success:
             if rospy.is_shutdown():
@@ -221,9 +200,6 @@ class Navigator():
             y_curr = self.pose2d.y
             theta_curr = self.pose2d.theta
 
-            
-
-
             ##########################################################################################################
             # TODO: Use the goal and current robot pose to modify the robot's linear and angular velocity.
             #       You shall only modify the linear.x and angular.z velocities.
@@ -232,7 +208,6 @@ class Navigator():
             ##########################################################################################################
 
             # Your code here...
-            
 
             if STATE == 0:
                 #rospy.loginfo("State: %s | AngularErrorM %s",STATE,angularErrorM)
@@ -245,7 +220,6 @@ class Navigator():
                 pastAngularErrorM = angularErrorM
                 diff = thetaM - theta_curr
                 angularErrorM = abs(diff)
-
 
                 # establish angular velocity
                 controlAngularSpeed = kp * angularErrorM + kd * (angularErrorM-pastAngularErrorM)
@@ -265,8 +239,7 @@ class Navigator():
                 # compute distance:
                 if angularErrorM < THETA_THRESHOLD:
                     STATE += 1 
-                    self.resetCOmmand(cmd_vel)
-                    
+                    self.resetCOmmand(cmd_vel)        
             
             elif STATE == 1:
                 """
@@ -278,7 +251,6 @@ class Navigator():
                             self.pub.publish(cmd_vel)
                             break
                 """
-
 
                 # calculate angular error
                 xDiff = x_goal - x_curr
@@ -318,13 +290,11 @@ class Navigator():
                             #self.pub(cmd_vel)
                             #break
                     
-
                 #elif self.greenFlag and not self.redFlag:
                     #cmd_vel.linear.x = linealVel
                 else:
                     cmd_vel.angular.z = factor * controlAngularSpeed if controlAngularSpeed <= 0.3 else 0.3 * factor
                     cmd_vel.linear.x = linealVel
-
                 
                 self.pub.publish(cmd_vel)
                 # compute distance:
@@ -334,10 +304,6 @@ class Navigator():
                     STATE += 1
                     self.resetCOmmand(cmd_vel)
                     
-
-
-
-            
             else:
                 pastAngularError = angularError
                 diff = theta_goal - theta_curr
@@ -363,11 +329,6 @@ class Navigator():
                     success = True
                     STATE = 0
 
-            
-
-
-
-
             ##########################################################################################################
 
             #self.pub.publish(cmd_vel)
@@ -380,9 +341,6 @@ class Navigator():
             self.result.success = True
             self.action.set_succeeded(self.result)
             #self.resetCOmmand(cmd_vel)
-
-
-
 
 if __name__ == '__main__':
     try:
