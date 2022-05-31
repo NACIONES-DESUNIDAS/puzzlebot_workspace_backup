@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from turtle import left
 import rospy
 from rospy_tutorials.msg import Floats
 from rospy.numpy_msg import numpy_msg
@@ -13,6 +14,8 @@ TOPIC = "/vertical_sum"
 # rate
 RATE = 10
 
+LEFT_THRESHOLD = -150
+RIGHT_THRESHOLD =  150
 
 class Puzzlebot_Grapher:
     def __init__(self):
@@ -30,6 +33,7 @@ class Puzzlebot_Grapher:
 
     # split the vertical sum into two different arrays based on right and left edges
     def splitEdges(self,gradient,maxScaleFactor = 0.2,minScaleFactor = 0.2):
+        """
         min = np.min(gradient) * minScaleFactor
         max = np.max(gradient) * maxScaleFactor
         mean = np.mean(gradient)
@@ -40,6 +44,16 @@ class Puzzlebot_Grapher:
 
 
         return leftEdges,rightEdges
+        """
+
+        left_gradient = gradient.copy()
+        right_gradient = gradient.copy()
+
+        left_gradient[left_gradient > LEFT_THRESHOLD] = 0
+        right_gradient[right_gradient < RIGHT_THRESHOLD] = 0
+
+        return left_gradient, right_gradient
+
 
 
     def filterWithNumber(self,gradient,threshold = 20,up=True):
@@ -76,6 +90,7 @@ class Puzzlebot_Grapher:
         compare = shifted > gradient
         return compare
 
+    """
     def cleanSignal(self,edges,thres = 10):
         edgeList = list(edges[0])
         cleanEdges = list()
@@ -89,7 +104,9 @@ class Puzzlebot_Grapher:
                 edge = edgeList[i]
                 cleanEdges.append(edge)
         return np.array(cleanEdges)
-        
+    """
+
+
     def mapEdges(self,leftEdges,rightEdges, minWidth = 40, maxWidth = 70):
         #rospy.loginfo(len(leftEdges))
         #rospy.loginfo(len(rightEdges))
@@ -119,7 +136,8 @@ class Puzzlebot_Grapher:
             # split the left edges and the right edges
             left,right = self.splitEdges(gradient)
 
-
+            #left = self.filterWithNumber(left,up=False)
+            #right = self.filterWithNumber(right)
 
             # compute second gradient
             secondLeftGradient = np.gradient(left)
@@ -146,8 +164,6 @@ class Puzzlebot_Grapher:
             rightEdges = np.where(rightCompare)
 
             # clean from repeated and proximal edges
-            leftEdges = self.cleanSignal(leftEdges)
-            rightEdges = self.cleanSignal(rightEdges)
 
             rospy.loginfo("Left Edges:")
             rospy.loginfo(leftEdges)
