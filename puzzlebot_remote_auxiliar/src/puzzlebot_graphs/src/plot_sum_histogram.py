@@ -5,7 +5,7 @@ from rospy_tutorials.msg import Floats
 from rospy.numpy_msg import numpy_msg
 import numpy as np
 import matplotlib.pyplot as plt
-from std_msgs.msg import Int32MultiArray
+from std_msgs.msg import Int32MultiArray, Float32MultiArray
 
 
 
@@ -21,6 +21,8 @@ class Puzzlebot_Grapher:
     def __init__(self):
         #self.vetSumSubscriber = rospy.Subscriber(TOPIC,numpy_msg(Floats),self.veticalSumCallback)
         self.vetSumSubscriber = rospy.Subscriber(TOPIC,Int32MultiArray,self.veticalSumCallback)
+        self.leftEdgePublisher = rospy.Publisher('/leftEdge', Float32MultiArray, queue_size = 10)
+        self.rightEdgePublisher = rospy.Publisher('/rightEdge', Float32MultiArray, queue_size = 10)
         rospy.init_node('puzzlebot_line_detection')
 
         # Define the ROS node execution rate
@@ -188,6 +190,11 @@ class Puzzlebot_Grapher:
             plt.legend(["left","right"])            
             plt.pause(0.05)
             plt.clf()
+
+            self.leftEdgePublisher.publish(leftEdges)
+            self.rightEdgePublisher.publish(rightEdges)
+
+
 
 
 if __name__ == '__main__':
