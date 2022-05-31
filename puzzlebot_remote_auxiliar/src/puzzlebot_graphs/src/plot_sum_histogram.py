@@ -1,8 +1,5 @@
 #!/usr/bin/env python
-from turtle import left
 import rospy
-from rospy_tutorials.msg import Floats
-from rospy.numpy_msg import numpy_msg
 import numpy as np
 import matplotlib.pyplot as plt
 from std_msgs.msg import Int32MultiArray, Float32MultiArray
