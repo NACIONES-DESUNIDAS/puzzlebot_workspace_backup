@@ -7,6 +7,8 @@ FRAMEWIDTH = 512
 EDGES_THRESHOLD_MIN = 26
 EDGES_THRESHOLD_MAX = 28
 
+PUB_RATE = 30
+
 class Modulator():
     def __init__(self):
         # Subscribers
@@ -15,6 +17,8 @@ class Modulator():
 
         # Publishers
         self.angularErrorPub = rospy.Publisher("/angularError", Float32, queue_size = 10)
+
+        self.rate = rospy.Rate(PUB_RATE)
 
         self.currentLinePos = 256
 
@@ -33,7 +37,7 @@ class Modulator():
             self.lineWidth = self.leftEdges - self.rightEdges
             self.linePos = ((self.leftEdges - self.rightEdges) / 2.0) - (FRAMEWIDTH / 2.0)
         else:
-            self.centerPoint = np.nan()
+            self.angularError = np.nan()
 
         self.previousLinePos = self.currentLinePos
         self.currentLinePos = self.linePos
@@ -45,8 +49,18 @@ class Modulator():
         else:
             self.angularError = 0
 
+        self.angularErrorPub.publish(self.angularError)
+
+    def run(self):
+        while not rospy.is_shutdown():
+            if self.rightEdges is None or self.leftEdges is None:
+                self.rate.sleep()
+            
+            self.edgeModulation()
+
 if __name__ == '__main__':
+    modulator = Modulator()
     try:
-        modulator = Modulator()
+        modulator.run()
     except rospy.ROSInterruptException:
         pass

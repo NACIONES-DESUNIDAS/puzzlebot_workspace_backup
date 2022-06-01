@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 import rospy
 import actionlib
+import numpy as np
 from math import atan2, pi, sqrt
 from geometry_msgs.msg import Pose2D, Twist
-from std_msgs.msg import Bool
+from std_msgs.msg import Bool, Float32
 from puzzlebot_msgs.msg import GoToPoseAction, GoToPoseFeedback, GoToPoseResult
 
 RATE   =  10
@@ -78,6 +79,8 @@ class Navigator():
 
         ##########################################################################################################
 
+        self.angularSub = rospy.Subscriber("/angularError", Float32, self.angularErrorCallback)
+
         self.action.start()
         rospy.spin()
 
@@ -142,6 +145,13 @@ class Navigator():
         cmd_vel.angular.y = 0.0
         cmd_vel.angular.z = 0.0
         self.pub.publish(cmd_vel)
+
+    def angularErrorCallback(self, msg):
+        self.rate = rospy.Rate(self.pub_rate)
+
+        while not msg == np.nan():
+            if rospy.is_shutdown():
+                break
 
     def actionCallback(self, goal):
 
