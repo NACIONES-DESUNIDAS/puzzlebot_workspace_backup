@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 import rospy, cv_bridge
 from sensor_msgs.msg import Image
-from std_msgs.msg import Int32MultiArray
+from std_msgs.msg import Int32MultiArray, Float32MultiArray
 
 # the place that we use to fetch stuff
 ROS_PARAMS = '/puzzlebot_vision/line_detection/parameters'
@@ -14,8 +14,11 @@ IMG_HEIGHT = 360
 IMG_WIDTH = 480
 CAMERA_TOPIC = '/video_source/raw'
 
+LEFT_THRESHOLD = -150
+RIGHT_THRESHOLD =  150
+
 OUTPUT_IMAGE_TOPIC = "/puzzlebot_vision/line_detection/edges_detection_image"
-OUTPUT_PREPROCESSED_IMAGE_TOPIC = "/puzzlebot_vision/line_detection/preprosecced_image"
+OUTPUT_PREPROCESSED_IMAGE_TOPIC = "/puzzlebot_vision/line_detection/preprocessed_image"
 OUTPUT_CHECKPOINT_TOPIC = "/puzzlebot_vision/line_detection/controller_set_point"
 
 class LineDetector:
@@ -61,6 +64,8 @@ class LineDetector:
         self.lineCheckpoint = rospy.Publisher(OUTPUT_CHECKPOINT_TOPIC,Image,queue_size=1) # reference
         #self.verticalSumPub = rospy.Publisher("/vertical_sum",numpy_msg(Floats),queue_size=10)
         self.verticalSumPub = rospy.Publisher("/vertical_sum",Int32MultiArray,queue_size=10)
+        self.leftEdgePublisher = rospy.Publisher('/leftEdge', Float32MultiArray, queue_size = 10)
+        self.rightEdgePublisher = rospy.Publisher('/rightEdge', Float32MultiArray, queue_size = 10)
 
         # subscribers 
         self.rawVideoSubscriber = rospy.Subscriber(camera_topic,Image,self.imageCallback)
@@ -108,11 +113,14 @@ class LineDetector:
         return img[int(self.imgHeight*0.60):,:]
 
     def sumVertically(self,img):
+        """
         sum = img.sum(axis = 0)
-        #rospy.loginfo(type(sum))
-        #sum2 = np.gradient(sum)
-        #rospy.loginfo(type(sum))
+        rospy.loginfo(type(sum))
+        sum2 = np.gradient(sum)
+        rospy.loginfo(type(sum))
         return sum
+        """
+        return (np.sum(img, axis = 0)).astype(dtype = np.float32)
 
     def edgeDetection(self,img):
         """
@@ -141,6 +149,50 @@ class LineDetector:
     def createImageMask(self,image,lowerBound,upperBound):
         return  cv2.inRange(image, lowerBound, upperBound)
 
+    # filter and array to eliminate noise
+    def filterWithThreshold(self,gradient,scaleThreshold = 0.4):
+        min = np.min(gradient) * scaleThreshold
+        max = np.max(gradient) * scaleThreshold
+        positive = gradient.copy()
+        negative = gradient.copy()
+        positive[positive <  max] = 0
+        negative[negative > min] = 0
+
+        return positive + negative
+
+    # stay with the positive part of the edge detection
+    def filterNegative(self,gradient):
+        gradient[gradient < 0 ] = 0
+        return gradient
+        
+
+    # left shift and compare the arrays
+    def shiftCompare(self,gradient):
+        shifted = np.roll(gradient.copy(),1) # left shify
+        #shifted = np.left_shift(1,gradient) # left shify
+        compare = shifted > gradient
+        return compare
+
+    def splitEdges(self,gradient,maxScaleFactor = 0.2,minScaleFactor = 0.2):
+        """
+        min = np.min(gradient) * minScaleFactor
+        max = np.max(gradient) * maxScaleFactor
+        mean = np.mean(gradient)
+        leftEdges = gradient.copy()
+        rightEdges = gradient.copy()
+        leftEdges[leftEdges > max ] = mean
+        rightEdges[rightEdges < min ] = mean
+        return leftEdges,rightEdges
+        """
+
+        left_gradient = gradient.copy()
+        right_gradient = gradient.copy()
+
+        left_gradient[left_gradient > LEFT_THRESHOLD] = 0
+        right_gradient[right_gradient < RIGHT_THRESHOLD] = 0
+
+        return left_gradient, right_gradient
+
     def run(self):
         #blackLower = np.array([0])
         #blackHigher = np.array([20])
@@ -163,13 +215,51 @@ class LineDetector:
             proprocessedOutput = self.bridge.cv2_to_imgmsg(preprocessedImage)
             #otherOutput = self.bridge.cv2_to_imgmsg(binarized)
 
+            """
             arrayMessage = Int32MultiArray()
             arrayMessage.data = vertSum
-
+            """
             self.preprocessedImagePub.publish(proprocessedOutput)
             #self.edgesImagePub.publish(otherOutput)
-            self.verticalSumPub.publish(arrayMessage)
+            #self.verticalSumPub.publish(arrayMessage)
             #rospy.loginfo(vertSum.shape)
+
+            # compute gradient
+            gradient = np.gradient(vertSum)
+
+            # split the left edges and the right edges
+            left,right = self.splitEdges(gradient)
+
+            #left = self.filterWithNumber(left,up=False)
+            #right = self.filterWithNumber(right)
+
+            # compute second gradient
+            secondLeftGradient = np.gradient(left)
+            secondRightGradient = np.gradient(right)
+
+            # filter noise from second gradient
+            secondLeftGradient = self.filterWithThreshold(secondLeftGradient)
+            secondRightGradient = self.filterWithThreshold(secondRightGradient)
+
+            # mutiply first with second gradient
+            leftMul = left * secondLeftGradient
+            rightMul = right * secondRightGradient
+
+            # remove negative portion of both arrays
+            leftPositive = self.filterNegative(leftMul)
+            rightPositive = self.filterNegative(rightMul)
+
+            # pixelShift:
+            leftCompare = self.shiftCompare(leftPositive)
+            rightCompare = self.shiftCompare(rightPositive)
+
+            # right and left slices positions
+            leftEdges = np.where(leftCompare)
+            rightEdges = np.where(rightCompare)
+
+            # Publish left and right edges
+            self.leftEdgePublisher.publish(leftEdges)
+            self.rightEdgePublisher.publish(rightEdges)
 
 if __name__ == '__main__':
     lineDetector = LineDetector()

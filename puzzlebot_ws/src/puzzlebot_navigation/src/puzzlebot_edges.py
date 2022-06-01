@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import rospy
 import numpy as np
-from std_msgs.msg import Float32MultiArray
+from std_msgs.msg import Float32MultiArray, Float32
 
 FRAMEWIDTH = 512
 EDGES_THRESHOLD_MIN = 26
