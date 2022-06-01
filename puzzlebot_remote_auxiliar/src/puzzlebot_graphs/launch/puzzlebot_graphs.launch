@@ -2,4 +2,5 @@
 <launch>
     <!-- Run the created puzzlebot_vision node that will process the camera Image messages -->
     <node name="puzzlebot_grapher" pkg="puzzlebot_graphs" type="plot_sum_histogram.py" output="screen"/>
+    <node name="puzzlebot_grapher" pkg="puzzlebot_graphs" type="edgeModulation.py" output="screen"/>
 </launch>

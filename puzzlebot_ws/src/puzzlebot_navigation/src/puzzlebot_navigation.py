@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-from distutils.log import error
-from pickle import FALSE
 import rospy
 import actionlib
 from math import atan2, pi, sqrt
