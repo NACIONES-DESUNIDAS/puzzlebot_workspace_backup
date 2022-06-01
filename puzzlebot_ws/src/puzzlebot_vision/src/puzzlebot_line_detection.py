@@ -3,15 +3,7 @@ import cv2
 import numpy as np
 import rospy, cv_bridge
 from sensor_msgs.msg import Image
-from std_msgs.msg import Float32
-from rospy.numpy_msg import numpy_msg
-from rospy_tutorials.msg import Floats
 from std_msgs.msg import Int32MultiArray
-
-
-
-
-
 
 # the place that we use to fetch stuff
 ROS_PARAMS = '/puzzlebot_vision/line_detection/parameters'
@@ -22,13 +14,9 @@ IMG_HEIGHT = 360
 IMG_WIDTH = 480
 CAMERA_TOPIC = '/video_source/raw'
 
-
 OUTPUT_IMAGE_TOPIC = "/puzzlebot_vision/line_detection/edges_detection_image"
 OUTPUT_PREPROCESSED_IMAGE_TOPIC = "/puzzlebot_vision/line_detection/preprosecced_image"
 OUTPUT_CHECKPOINT_TOPIC = "/puzzlebot_vision/line_detection/controller_set_point"
-
-
-
 
 class LineDetector:
     def __init__(self):
@@ -42,18 +30,12 @@ class LineDetector:
 
         # try to fetch the publication rate from the files
 
-
         pub_rate = 0
         if rospy.has_param(ROS_PARAMS + '/line_detection_pub_rate'):
             pub_rate = rospy.get_param(ROS_PARAMS + '/line_detection_pub_rate')
             rospy.loginfo("PUB RATE LOADED FROM PARAMETER SERVER: %s", pub_rate)
         else:
             pub_rate = RATE    
-
-
-
-
-
 
         # try to fetch image scale factors
 
@@ -69,8 +51,6 @@ class LineDetector:
         else:
             self.imgHeight = IMG_HEIGHT   
 
-        
-
         # instanciate openCv Connector
         self.bridge = cv_bridge.CvBridge()
         self.image = None
@@ -82,10 +62,6 @@ class LineDetector:
         #self.verticalSumPub = rospy.Publisher("/vertical_sum",numpy_msg(Floats),queue_size=10)
         self.verticalSumPub = rospy.Publisher("/vertical_sum",Int32MultiArray,queue_size=10)
 
-
-
-
-
         # subscribers 
         self.rawVideoSubscriber = rospy.Subscriber(camera_topic,Image,self.imageCallback)
 
@@ -94,7 +70,6 @@ class LineDetector:
 
         # Define the ROS node execution rate
         self.rate = rospy.Rate(pub_rate)
-
 
         # define edge detection filters:
         self.sobelY = np.array([[-1,-2,-1], 
@@ -124,7 +99,6 @@ class LineDetector:
 
         gray = cv2.rotate(gray,cv2.ROTATE_180)
 
-
         gray =cv2.GaussianBlur(gray,(11,11),0)
         gray = cv2.erode(src=gray,kernel=(9,9) ,iterations=1)
         gray = cv2.dilate(src=gray,kernel=(7,7) ,iterations=1)
@@ -139,7 +113,6 @@ class LineDetector:
         #sum2 = np.gradient(sum)
         #rospy.loginfo(type(sum))
         return sum
-
 
     def edgeDetection(self,img):
         """
@@ -157,7 +130,7 @@ class LineDetector:
         erotion = cv2.erode(src=binary,kernel=self.medianFilter ,iterations=1)
         binarized = cv2.dilate(src=binary,kernel=self.medianFilter ,iterations=3)
         """
-    
+
         retval, binary = cv2.threshold(img, 10, 255, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
         erotion = cv2.erode(src=binary,kernel=self.medianFilter ,iterations=1)
         dilation = cv2.dilate(src=binary,kernel=self.medianFilter ,iterations=1)
@@ -165,16 +138,8 @@ class LineDetector:
         
         return binarized
         
-
-
-
     def createImageMask(self,image,lowerBound,upperBound):
         return  cv2.inRange(image, lowerBound, upperBound)
-
-
-        
-
-        
 
     def run(self):
         #blackLower = np.array([0])
@@ -195,7 +160,6 @@ class LineDetector:
             # binarize
             #binarized = self.edgeDetection(preprocessedImage)
 
-
             proprocessedOutput = self.bridge.cv2_to_imgmsg(preprocessedImage)
             #otherOutput = self.bridge.cv2_to_imgmsg(binarized)
 
@@ -206,9 +170,6 @@ class LineDetector:
             #self.edgesImagePub.publish(otherOutput)
             self.verticalSumPub.publish(arrayMessage)
             #rospy.loginfo(vertSum.shape)
-
-
-
 
 if __name__ == '__main__':
     lineDetector = LineDetector()

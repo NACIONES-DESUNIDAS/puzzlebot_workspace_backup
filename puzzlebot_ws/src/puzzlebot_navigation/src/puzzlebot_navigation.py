@@ -4,7 +4,7 @@ import actionlib
 from math import atan2, pi, sqrt
 from geometry_msgs.msg import Pose2D, Twist
 from std_msgs.msg import Bool
-from puzzlebot_msgs.msg import GoToPoseAction, GoToPoseFeedback, GoToPoseResult, Float32MultiArray
+from puzzlebot_msgs.msg import GoToPoseAction, GoToPoseFeedback, GoToPoseResult
 
 RATE   =  10
 
@@ -35,8 +35,6 @@ class Navigator():
         # Your code here...
         self.pub = rospy.Publisher("/cmd_vel",Twist,queue_size=1)
         self.poseRecb = rospy.Subscriber("/pose2d",Pose2D,self.poseCallback)
-        self.leftEdgeSubscriber = rospy.Subscriber("/leftEdge", Float32MultiArray, self.leftEdgeCallback)
-        self.rightEdgeSubscriber = rospy.Subscriber("/rightEdge", Float32MultiArray, self.rightEdgeCallback)
 
         ##########################################################################################################
 
@@ -93,12 +91,6 @@ class Navigator():
 
     def poseCallback(self, data):
         self.pose2d = data
-
-    def rightEdgeCallback(self, msg):
-        self.rightEdges = msg.data
-
-    def leftEdgeCallback(self, msg):
-        self.leftEdges = msg.data
 
     def euclideanDistance(self,xGoal,yGoal,x,y):
         return sqrt((yGoal - y)**2+(xGoal-x)**2)

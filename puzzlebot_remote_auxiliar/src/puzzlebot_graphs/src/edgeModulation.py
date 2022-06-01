@@ -24,7 +24,6 @@ class Modulator():
         self.leftEdges = msg.data
 
     def edgeModulation(self):
-        # quicktest 2
         if len(self.rightEdges) == len(self.leftEdges):
             self.centerPoint = self.leftEdges - self.rightEdges
             self.lineWidth = self.leftEdges - self.rightEdges
