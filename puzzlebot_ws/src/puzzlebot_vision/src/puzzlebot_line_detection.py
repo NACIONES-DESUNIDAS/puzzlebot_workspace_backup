@@ -120,7 +120,9 @@ class LineDetector:
         rospy.loginfo(type(sum))
         return sum
         """
-        return (np.sum(img, axis = 0)).astype(dtype = np.float32)
+        sum = img.sum(axis=0)
+        sum = np.float32(sum)
+        return sum
 
     def edgeDetection(self,img):
         """
@@ -258,8 +260,16 @@ class LineDetector:
             rightEdges = np.where(rightCompare)
 
             # Publish left and right edges
-            self.leftEdgePublisher.publish(leftEdges)
-            self.rightEdgePublisher.publish(rightEdges)
+            rospy.loginfo(type(leftEdges[0]))
+            rospy.loginfo(leftEdges[0])
+            rospy.loginfo(type(rightEdges[0]))
+            rospy.loginfo(rightEdges[0])
+            leftMessage = Float32MultiArray()
+            leftMessage.data = leftEdges[0]
+            rightMessage = Float32MultiArray()
+            rightMessage.data = rightEdges[0]
+            self.leftEdgePublisher.publish(leftMessage)
+            self.rightEdgePublisher.publish(rightMessage)
 
 if __name__ == '__main__':
     lineDetector = LineDetector()
