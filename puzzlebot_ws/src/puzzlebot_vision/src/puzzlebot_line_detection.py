@@ -243,6 +243,8 @@ class LineDetector:
             secondLeftGradient = self.filterWithThreshold(secondLeftGradient)
             secondRightGradient = self.filterWithThreshold(secondRightGradient)
 
+            rospy.loginfo(len(secondRightGradient))
+
             # mutiply first with second gradient
             leftMul = left * secondLeftGradient
             rightMul = right * secondRightGradient
@@ -260,10 +262,10 @@ class LineDetector:
             rightEdges = np.where(rightCompare)
 
             # Publish left and right edges
-            rospy.loginfo(type(leftEdges[0]))
-            rospy.loginfo(leftEdges[0])
-            rospy.loginfo(type(rightEdges[0]))
-            rospy.loginfo(rightEdges[0])
+            # rospy.loginfo(type(leftEdges[0]))
+            # rospy.loginfo(leftEdges[0])
+            # rospy.loginfo(type(rightEdges[0]))
+            # rospy.loginfo(rightEdges[0])
             leftMessage = Float32MultiArray()
             leftMessage.data = leftEdges[0]
             rightMessage = Float32MultiArray()
