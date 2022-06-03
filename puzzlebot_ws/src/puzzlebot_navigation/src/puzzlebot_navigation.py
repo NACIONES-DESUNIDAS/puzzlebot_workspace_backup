@@ -11,8 +11,8 @@ RATE   =  10
 
 # some nice parameters
 linealVel = 0.1
-kp = 0.1
-kd = 0.1
+kp = 2.25
+kd = 1.5
 
 NAN = np.nan
 

@@ -93,8 +93,12 @@ class Modulator():
             self.currentLinePos == self.previousLinePos
             self.angularError = np.nan
         else:
-            self.currentLinePos = filtered_line_edges_tuple["center"]["line_position"]
-            self.angularError = filtered_line_edges_tuple["center"]["line_position"]
+            if filtered_line_edges_tuple['center']["line_position"] == 0 and self.previousLinePos > 50:
+                self.currentLinePos == self.previousLinePos
+                self.angularError = self.currentLinePos
+            else:
+                self.currentLinePos = filtered_line_edges_tuple["center"]["line_position"] 
+                self.angularError = filtered_line_edges_tuple["center"]["line_position"]
 
         rospy.loginfo(self.angularError)
 
