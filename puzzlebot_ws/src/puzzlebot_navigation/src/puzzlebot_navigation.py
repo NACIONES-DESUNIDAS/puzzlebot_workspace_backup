@@ -330,28 +330,6 @@ class Navigator():
                 diff = thetaM - theta_curr
                 angularErrorM = abs(diff)
 
-                # establish angular velocity
-                controlAngularSpeed = kp * angularErrorM + kd * (angularErrorM-pastAngularErrorM)
-                # control angular velocity saturation
-                if angularErrorM > pi and  diff > 0:
-                    factor = -1
-                elif angularErrorM > pi and  diff < 0:
-                    factor = 1
-                elif angularErrorM < pi and diff < 0:
-                    factor = -1
-                else: 
-                    factor = 1
-
-                if self.redFlag:
-                    #self.resetCOmmand(cmd_vel)
-                    
-                    while self.greenFlag == False:
-                        rospy.loginfo("Enter Red Stop")
-                        cmd_vel.linear.x = 0.0
-                        self.pub.publish(cmd_vel)
-                    cmd_vel.linear.x = self.linealVel
-                    self.pub.publish(cmd_vel)
-                    rospy.loginfo("Enter Red Stop")
 
                         #self.resetCOmmand(cmd_vel)
                         #if self.greenFlag and not self.redFlag:
