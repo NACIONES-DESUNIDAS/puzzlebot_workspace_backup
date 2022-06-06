@@ -14,8 +14,9 @@ IMG_HEIGHT = 360
 IMG_WIDTH = 480
 CAMERA_TOPIC = '/video_source/raw'
 
-LEFT_THRESHOLD = -150
-RIGHT_THRESHOLD =  150
+
+
+
 
 OUTPUT_IMAGE_TOPIC = "/puzzlebot_vision/line_detection/edges_detection_image"
 OUTPUT_PREPROCESSED_IMAGE_TOPIC = "/puzzlebot_vision/line_detection/preprocessed_image"
@@ -110,36 +111,16 @@ class LineDetector:
         return gray
 
     def sliceImage(self,img):
-        return img[int(self.imgHeight*0.60):,:]
+        return img[int(self.imgHeight*0.65):,:]
 
     def sumVertically(self,img):
-        """
-        sum = img.sum(axis = 0)
-        rospy.loginfo(type(sum))
-        sum2 = np.gradient(sum)
-        rospy.loginfo(type(sum))
-        return sum
-        """
+
         sum = img.sum(axis=0)
         sum = np.float32(sum)
         return sum
 
     def edgeDetection(self,img):
-        """
-        canny = cv2.Canny(img,120,240)
-        retval, binary = cv2.threshold(canny, 127, 255, cv2.THRESH_BINARY)
-        contours,hierchy = cv2.findContours(canny,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
-        contourImage = np.copy(img)
-        contourImage = cv2.drawContours(contourImage,contours,-1,(0,0,255),2)
-        """
-        """
-        filteredX = cv2.filter2D(img, -1, self.sobelX)
-        filteredY = cv2.filter2D(img, -1, self.sobelY)
-        overall = filteredX+filteredY
-        retval, binary = cv2.threshold(overall, 10, 255, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
-        erotion = cv2.erode(src=binary,kernel=self.medianFilter ,iterations=1)
-        binarized = cv2.dilate(src=binary,kernel=self.medianFilter ,iterations=3)
-        """
+
 
         retval, binary = cv2.threshold(img, 10, 255, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
         erotion = cv2.erode(src=binary,kernel=self.medianFilter ,iterations=1)
@@ -176,22 +157,22 @@ class LineDetector:
         return compare
 
     def splitEdges(self,gradient,maxScaleFactor = 0.2,minScaleFactor = 0.2):
-        """
-        min = np.min(gradient) * minScaleFactor
-        max = np.max(gradient) * maxScaleFactor
-        mean = np.mean(gradient)
-        leftEdges = gradient.copy()
-        rightEdges = gradient.copy()
-        leftEdges[leftEdges > max ] = mean
-        rightEdges[rightEdges < min ] = mean
-        return leftEdges,rightEdges
-        """
+
+        maxVal = np.max(gradient)
+        minVal = np.min(gradient)
+
 
         left_gradient = gradient.copy()
         right_gradient = gradient.copy()
 
+
+        LEFT_THRESHOLD = -150 if minVal < -150 else -50
+        RIGHT_THRESHOLD =  150 if maxVal > 150 else 50
+
         left_gradient[left_gradient > LEFT_THRESHOLD] = 0
         right_gradient[right_gradient < RIGHT_THRESHOLD] = 0
+        
+
 
         return left_gradient, right_gradient
 
@@ -213,17 +194,17 @@ class LineDetector:
 
             # binarize
             #binarized = self.edgeDetection(preprocessedImage)
-
+            #rospy.loginfo(preprocessedImage.shape)
             proprocessedOutput = self.bridge.cv2_to_imgmsg(preprocessedImage)
-            #otherOutput = self.bridge.cv2_to_imgmsg(binarized)
 
-            """
+            
             arrayMessage = Int32MultiArray()
             arrayMessage.data = vertSum
-            """
+            
             self.preprocessedImagePub.publish(proprocessedOutput)
-            #self.edgesImagePub.publish(otherOutput)
-            #self.verticalSumPub.publish(arrayMessage)
+            self.verticalSumPub.publish(arrayMessage)
+            
+            
             #rospy.loginfo(vertSum.shape)
 
             # compute gradient
@@ -277,3 +258,4 @@ if __name__ == '__main__':
         lineDetector.run()
     except rospy.ROSInterruptException:
         pass
+
