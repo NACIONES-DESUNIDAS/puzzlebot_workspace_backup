@@ -1,6 +1,6 @@
 <launch>
     <node pkg="puzzlebot_navigation" type="puzzlebot_odometry.py" name="robot_odometry" output="screen"/>
     <node pkg="puzzlebot_navigation" type="puzzlebot_edges.py" name="robot_edgeDectection" output="screen"/>
-    <node pkg="puzzlebot_navigation" type="puzzlebot_navigation.py" name="robot_navigation"/>
+    <node pkg="puzzlebot_navigation" type="puzzlebot_navigation.py" name="robot_navigation" output="screen"/>
     <rosparam command="load" file="$(find puzzlebot_navigation)/config/puzzlebot_navigation.yaml" />
 </launch>

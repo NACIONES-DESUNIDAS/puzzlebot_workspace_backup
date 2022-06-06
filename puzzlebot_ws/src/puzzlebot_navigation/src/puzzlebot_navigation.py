@@ -178,13 +178,13 @@ class Navigator():
 
         self.pastAngularError = angularErrorAbs * factor
 
-        cmd_vel.angular.z = factor * controlAngularSpeed if controlAngularSpeed <= 0.2 else 0.2 * factor
+        cmd_vel.angular.z = factor * controlAngularSpeed if controlAngularSpeed <= 0.15 else 0.15 * factor
         
         if math.isnan(angularError):
             cmd_vel.linear.x = 0
             cmd_vel.angular.z = 0
         else:
-            cmd_vel.linear.x = 0.05
+            cmd_vel.linear.x = 0.1
 
         rospy.loginfo(cmd_vel)
 
