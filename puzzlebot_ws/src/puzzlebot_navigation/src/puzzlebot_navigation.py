@@ -2,6 +2,7 @@
 import rospy
 import actionlib
 import numpy as np
+import math
 from math import atan2, pi, sqrt
 from geometry_msgs.msg import Pose2D, Twist
 from std_msgs.msg import Bool, Float32
@@ -11,8 +12,8 @@ RATE   =  10
 
 # some nice parameters
 linealVel = 0.1
-kp = 2.25
-kd = 1.5
+kp = 0.001
+kd = 0.0025
 
 NAN = np.nan
 
@@ -86,6 +87,7 @@ class Navigator():
         self.angularSub = rospy.Subscriber("/angularError", Float32, self.angularErrorCallback)
 
         self.action.start()
+        self.rate = rospy.Rate(self.pub_rate)
         rospy.spin()
 
     def redLightFlag_callback(self, msg):
@@ -152,39 +154,41 @@ class Navigator():
 
     def angularErrorCallback(self, msg):
         rospy.loginfo(msg.data)
-        self.rate = rospy.Rate(self.pub_rate)
-        while not msg.data == NAN:
-            if rospy.is_shutdown():
-                break
-            angularError = msg.data
-            angularErrorAbs = abs(angularError)
-            cmd_vel = Twist()
+        angularError = msg.data
+        angularErrorAbs = abs(angularError)
+        cmd_vel = Twist()
+        cmd_vel.linear.x = 0.0
+        cmd_vel.linear.y = 0.0
+        cmd_vel.linear.z = 0.0
+        cmd_vel.angular.x = 0.0
+        cmd_vel.angular.y = 0.0
+        cmd_vel.angular.z = 0.0
+
+        controlAngularSpeed = kp * angularErrorAbs + kd * (angularErrorAbs - self.pastAngularError)
+        # Control angular velocity saturation
+        # Factor = -1 if angularError > pi else 1
+        if angularErrorAbs > pi and  angularError > 0:
+            factor = -1
+        elif angularErrorAbs > pi and  angularError < 0:
+            factor = 1
+        elif angularErrorAbs < pi and angularError < 0:
+            factor = -1
+        else: 
+            factor = 1
+
+        self.pastAngularError = angularErrorAbs * factor
+
+        cmd_vel.angular.z = factor * controlAngularSpeed if controlAngularSpeed <= 0.2 else 0.2 * factor
+        
+        if math.isnan(angularError):
+            cmd_vel.linear.x = 0
+            cmd_vel.angular.z = 0
+        else:
             cmd_vel.linear.x = 0.05
-            cmd_vel.linear.y = 0.0
-            cmd_vel.linear.z = 0.0
-            cmd_vel.angular.x = 0.0
-            cmd_vel.angular.y = 0.0
-            cmd_vel.angular.z = 0.0
 
-            controlAngularSpeed = kp * angularErrorAbs + kd * (angularErrorAbs-self.pastAngularError)
-            # Control angular velocity saturation
-            # Factor = -1 if angularError > pi else 1
-            if angularErrorAbs > pi and  angularError > 0:
-                factor = -1
-            elif angularErrorAbs > pi and  angularError < 0:
-                factor = 1
-            elif angularErrorAbs < pi and angularError < 0:
-                factor = -1
-            else: 
-                factor = 1
+        rospy.loginfo(cmd_vel)
 
-            self.pastAngularError = angularErrorAbs
-
-            cmd_vel.angular.z = factor * controlAngularSpeed if controlAngularSpeed <= 0.3 else 0.3 * factor
-            
-            rospy.loginfo(cmd_vel)
-
-            self.pub.publish(cmd_vel)
+        self.pub.publish(cmd_vel)
 
     def actionCallback(self, goal):
 

@@ -24,7 +24,10 @@ class Modulator():
         self.rightEdges = None
         self.leftEdges = None
 
-        self.currentLinePos = 256
+        self.currentLinePos = 0
+        self.previousLinePos = 0
+
+        self.angularErrorRecord = 0
 
         rospy.init_node('edgeModulator')
         self.rate = rospy.Rate(PUB_RATE)
@@ -88,19 +91,18 @@ class Modulator():
         
         # rospy.loginfo(filtered_line_edges_tuple)
 
-        self.previousLinePos = self.currentLinePos
         if filtered_line_edges_tuple["center"]["line_position"] == None:
             self.currentLinePos == self.previousLinePos
             self.angularError = np.nan
         else:
-            if filtered_line_edges_tuple['center']["line_position"] == 0 and self.previousLinePos > 50:
-                self.currentLinePos == self.previousLinePos
-                self.angularError = self.currentLinePos
-            else:
-                self.currentLinePos = filtered_line_edges_tuple["center"]["line_position"] 
-                self.angularError = filtered_line_edges_tuple["center"]["line_position"]
+            self.currentLinePos = filtered_line_edges_tuple["center"]["line_position"]
+            self.angularError = filtered_line_edges_tuple["center"]["line_position"]
 
-        rospy.loginfo(self.angularError)
+        self.previousLinePos = self.currentLinePos
+
+        self.angularErrorRecord = self.angularError
+
+        # rospy.loginfo(self.angularError)
 
         self.angularErrorPub.publish(self.angularError)
 
