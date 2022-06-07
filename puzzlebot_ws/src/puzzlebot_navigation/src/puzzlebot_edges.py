@@ -4,8 +4,8 @@ import numpy as np
 from std_msgs.msg import Float32MultiArray, Float32
 
 FRAMEWIDTH = 512
-EDGES_THRESHOLD_MIN = 12
-EDGES_THRESHOLD_MAX = 45
+EDGES_THRESHOLD_MIN = 17
+EDGES_THRESHOLD_MAX = 40
 EDGE_DISTANCE_THRESHOLD = 140
 
 NAN = np.nan
@@ -74,7 +74,7 @@ class Modulator():
             # Edge difference
             line_diff = next_edge_value - curr_edge_value
             # Check for alternating edges
-            if curr_edge_type == "LEFT" and next_edge_type == "RIGHT" and curr_edge_value > 100:
+            if curr_edge_type == "LEFT" and next_edge_type == "RIGHT" and curr_edge_value > 100 and curr_edge_value < 412:
                 # rospy.loginfo((curr_edge, next_edge))
                 if line_diff > EDGES_THRESHOLD_MIN and line_diff < EDGES_THRESHOLD_MAX:
                     # rospy.loginfo((curr_edge, next_edge))

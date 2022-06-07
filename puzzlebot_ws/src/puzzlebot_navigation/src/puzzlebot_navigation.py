@@ -15,10 +15,12 @@ linealVel = 0.1
 kp = 0.001
 kd = 0.0005
 
-TIME_THRESHOLD = 3
+TIME_THRESHOLD = 3.5
 
 THETA_THRESHOLD = 10.0 * pi / 180.0
 DIST_THRESHOLD = 0.1
+
+COUNTER_THRESHOLD = 2
 
 ROS_RED_LIGHT_DETECT_TOPIC = '/puzzlebot_vision/traffic_lights/red_light'
 ROS_GREEN_LIGHT_DETECT_TOPIC = '/puzzlebot_vision/traffic_lights/green_light'
@@ -30,13 +32,13 @@ class Navigator():
         self.pose2d.y = 0.0
         self.pose2d.theta = 0.0
 
-        self.currentAngularTime = 0
-        self.pastAngularTime = 0
-
         self.angularTimeTolerance = 0
 
         self.pastAngularError = 0
         self.pastAngularErrorAbs = 0
+
+        self.counter = 5
+        self.counterNAN = 0
 
         ##########################################################################################################
         # TODO: Setup ROS subscribers and publishers, use the callback functions defined bellow if required. 
@@ -51,6 +53,9 @@ class Navigator():
         ##########################################################################################################
 
         rospy.init_node('puzzlebot_navigation')
+
+        self.currentAngularTime = rospy.get_time()
+        self.pastAngularTime = rospy.get_time()
 
         self.pub_rate = 0
 
@@ -187,15 +192,28 @@ class Navigator():
         else:
             factor = 0
         if not math.isnan(angularError):
-            self.pastAngularErrorAbs = angularErrorAbs
-            self.pastAngularError = angularError
+            self.counterNAN = 0
+            if self.counter >= COUNTER_THRESHOLD and self.counterNAN <= COUNTER_THRESHOLD:
+                self.pastAngularErrorAbs = angularErrorAbs
+                self.pastAngularError = angularError
+            else:
+                if self.pastAngularError > 0:
+                    factor = -1.0
+                elif self.pastAngularError < 0:
+                    factor = 1.0
+                else:
+                    factor = 0
+            self.counter += 1
         else:
+            self.counter = 0
             if self.pastAngularError > 0:
                 factor = -1.0
             elif self.pastAngularError < 0:
                 factor = 1.0
             else:
                 factor = 0
+            self.counterNAN += 1
+            
 
         # rospy.loginfo("Past Angular Error:")
         # rospy.loginfo(self.pastAngularError)
@@ -205,7 +223,7 @@ class Navigator():
         if math.isnan(angularError):
             if self.angularTimeTolerance < TIME_THRESHOLD:
                 self.angularTimeTolerance += angularTempDiff
-                cmd_vel.angular.z = factor * controlAngularSpeed if controlAngularSpeed <= 0.1 and controlAngularSpeed >= -0.1 else 0.1 * factor
+                cmd_vel.angular.z =  0.075 * factor
                 cmd_vel.linear.x = 0.1
             else:
                 cmd_vel.linear.x = 0
