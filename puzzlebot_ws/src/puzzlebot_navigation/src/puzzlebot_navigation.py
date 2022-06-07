@@ -13,9 +13,9 @@ RATE   =  10
 # some nice parameters
 linealVel = 0.1
 kp = 0.001
-kd = 0.0025
+kd = 0.0005
 
-NAN = np.nan
+TIME_THRESHOLD = 3
 
 THETA_THRESHOLD = 10.0 * pi / 180.0
 DIST_THRESHOLD = 0.1
@@ -30,7 +30,13 @@ class Navigator():
         self.pose2d.y = 0.0
         self.pose2d.theta = 0.0
 
+        self.currentAngularTime = 0
+        self.pastAngularTime = 0
+
+        self.angularTimeTolerance = 0
+
         self.pastAngularError = 0
+        self.pastAngularErrorAbs = 0
 
         ##########################################################################################################
         # TODO: Setup ROS subscribers and publishers, use the callback functions defined bellow if required. 
@@ -153,18 +159,13 @@ class Navigator():
         self.pub.publish(cmd_vel)
 
     def angularErrorCallback(self, msg):
-
-        factor = 0
-
-        TIME_THRESHOLD = 1
-
         self.pastAngularTime = self.currentAngularTime
         self.currentAngularTime = rospy.get_time()
         angularTempDiff = self.currentAngularTime - self.pastAngularTime
 
         #rospy.loginfo(angularTempDiff)
-        angularError = msg.data
-        angularErrorAbs = abs(angularError)
+        angularError = msg.data 
+        angularErrorAbs = abs(angularError) if not math.isnan(angularError) else self.pastAngularErrorAbs
         cmd_vel = Twist()
         cmd_vel.linear.x = 0.0
         cmd_vel.linear.y = 0.0
@@ -173,47 +174,48 @@ class Navigator():
         cmd_vel.angular.y = 0.0
         cmd_vel.angular.z = 0.0
 
-        controlAngularSpeed = kp * angularErrorAbs + kd * (angularErrorAbs - self.pastAngularErrorAbs)
+        controlAngularSpeed = kp * angularErrorAbs + (kd * (angularErrorAbs - self.pastAngularErrorAbs)) / angularTempDiff
+
+        # rospy.loginfo("Velocidad Angular Robot:")
+        # rospy.loginfo(controlAngularSpeed)
         # Control angular velocity saturation
         # Factor = -1 if angularError > pi else 1
+        if angularError > 0:
+            factor = -1.0
+        elif angularError < 0:
+            factor = 1.0
+        else:
+            factor = 0
         if not math.isnan(angularError):
             self.pastAngularErrorAbs = angularErrorAbs
             self.pastAngularError = angularError
-            if angularError > 0:
-                factor -1
-            elif angularError < 0:
-                factor = 1
-            else: 
-                factor = 0
         else:
             if self.pastAngularError > 0:
-                factor = -1
+                factor = -1.0
             elif self.pastAngularError < 0:
-                factor = 1
+                factor = 1.0
             else:
                 factor = 0
 
-        rospy.loginfo("Past Angular Error:")
-        rospy.loginfo(self.pastAngularError)
-        rospy.loginfo("Past Angular Error Absolute:")
-        rospy.loginfo(self.pastAngularErrorAbs)
-
-        cmd_vel.angular.z = factor * controlAngularSpeed if controlAngularSpeed <= 0.05 and controlAngularSpeed >= -0.05 else 0.05 * factor
+        # rospy.loginfo("Past Angular Error:")
+        # rospy.loginfo(self.pastAngularError)
+        # rospy.loginfo("Past Angular Error Absolute:")
+        # rospy.loginfo(self.pastAngularErrorAbs)
         
-        # rospy.loginfo("Velocidad Angular Robot:")
-        # rospy.loginfo(factor * controlAngularSpeed)
         if math.isnan(angularError):
             if self.angularTimeTolerance < TIME_THRESHOLD:
                 self.angularTimeTolerance += angularTempDiff
+                cmd_vel.angular.z = factor * controlAngularSpeed if controlAngularSpeed <= 0.1 and controlAngularSpeed >= -0.1 else 0.1 * factor
                 cmd_vel.linear.x = 0.1
             else:
                 cmd_vel.linear.x = 0
                 cmd_vel.angular.z = 0
         else:
-            self.angularTimeTolerance = 0.0
+            self.angularTimeTolerance = 0
+            cmd_vel.angular.z = factor * controlAngularSpeed if controlAngularSpeed <= 0.1 and controlAngularSpeed >= -0.1 else 0.1 * factor
             cmd_vel.linear.x = 0.1
 
-        # rospy.loginfo(cmd_vel)
+        rospy.loginfo(cmd_vel.angular.z)
 
         self.pub.publish(cmd_vel)
         

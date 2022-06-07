@@ -74,12 +74,12 @@ class Modulator():
             # Edge difference
             line_diff = next_edge_value - curr_edge_value
             # Check for alternating edges
-            if curr_edge_type == "LEFT" and next_edge_type == "RIGHT":
+            if curr_edge_type == "LEFT" and next_edge_type == "RIGHT" and curr_edge_value > 100:
                 # rospy.loginfo((curr_edge, next_edge))
                 if line_diff > EDGES_THRESHOLD_MIN and line_diff < EDGES_THRESHOLD_MAX:
                     # rospy.loginfo((curr_edge, next_edge))
                     filtered_line_edges_tuple["center"]["line_edges"] = (curr_edge, next_edge)
-                    filtered_line_edges_tuple["center"]["line_position"] = ((next_edge_value + curr_edge_value) / 2.0) - (FRAMEWIDTH / 2.0) 
+                    filtered_line_edges_tuple["center"]["line_position"] = ((next_edge_value + curr_edge_value) / 2.0) - (FRAMEWIDTH / 2.0)
             elif curr_edge_type == "RIGHT" and next_edge_type == "LEFT":
                 if line_diff > EDGE_DISTANCE_THRESHOLD:
                     if line_diff < FRAMEWIDTH / 2:

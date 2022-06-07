@@ -111,7 +111,7 @@ class LineDetector:
         return gray
 
     def sliceImage(self,img):
-        return img[int(self.imgHeight*0.65):,:]
+        return img[int(self.imgHeight*0.6):,:]
 
     def sumVertically(self,img):
 
@@ -258,4 +258,3 @@ if __name__ == '__main__':
         lineDetector.run()
     except rospy.ROSInterruptException:
         pass
-
