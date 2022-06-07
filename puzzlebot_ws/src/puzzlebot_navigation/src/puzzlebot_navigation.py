@@ -31,7 +31,6 @@ class Navigator():
         self.pose2d.theta = 0.0
 
         self.pastAngularError = 0
-        self.pastAngularErrorAbs = 0
 
         ##########################################################################################################
         # TODO: Setup ROS subscribers and publishers, use the callback functions defined bellow if required. 
@@ -70,10 +69,6 @@ class Navigator():
 
         self.redFlag = Bool()
         self.greenFlag = Bool()
-
-        self.pastAngularTime = 0.0
-        self.currentAngularTime = 0.0
-        self.angularTimeTolerance = 0.0
 
         ##########################################################################################################
 
@@ -144,7 +139,7 @@ class Navigator():
             cmd_vel.linear.x = 0
             cmd_vel.angular.z = controlAngularSpeed if controlAngularSpeed <= 0.3 else 0.3
             self.pub.publish(cmd_vel)
-            #rospy.loginfo(angularError)
+            rospy.loginfo(angularError)
             lastError = angularError
             angularError = theta_goal - theta_curr
 
@@ -221,7 +216,7 @@ class Navigator():
         # rospy.loginfo(cmd_vel)
 
         self.pub.publish(cmd_vel)
-
+        
     def actionCallback(self, goal):
 
         ##########################################################################################################
@@ -330,6 +325,28 @@ class Navigator():
                 diff = thetaM - theta_curr
                 angularErrorM = abs(diff)
 
+                # establish angular velocity
+                controlAngularSpeed = kp * angularErrorM + kd * (angularErrorM-pastAngularErrorM)
+                # control angular velocity saturation
+                if angularErrorM > pi and  diff > 0:
+                    factor = -1
+                elif angularErrorM > pi and  diff < 0:
+                    factor = 1
+                elif angularErrorM < pi and diff < 0:
+                    factor = -1
+                else: 
+                    factor = 1
+
+                if self.redFlag:
+                    #self.resetCOmmand(cmd_vel)
+                    
+                    while self.greenFlag == False:
+                        rospy.loginfo("Enter Red Stop")
+                        cmd_vel.linear.x = 0.0
+                        self.pub.publish(cmd_vel)
+                    cmd_vel.linear.x = self.linealVel
+                    self.pub.publish(cmd_vel)
+                    rospy.loginfo("Enter Red Stop")
 
                         #self.resetCOmmand(cmd_vel)
                         #if self.greenFlag and not self.redFlag:
@@ -394,4 +411,3 @@ if __name__ == '__main__':
         navigator = Navigator()
     except rospy.ROSInterruptException:
         pass
-
