@@ -213,9 +213,8 @@ class Signal_Identifier:
 
         gray = cv2.cvtColor(masked,cv2.COLOR_BGR2GRAY)
         threshold,thresh = cv2.threshold(gray,0,255,cv2.THRESH_BINARY_INV+cv2.THRESH_OTSU)
-        #erotion = cv2.erode(src=thresh,kernel=np.ones((dims,dims)) ,iterations=itersErotion)
+        erotion = cv2.erode(src=thresh,kernel=np.ones((dims,dims)) ,iterations=itersErotion)
         dilation = cv2.dilate(src=erotion,kernel=np.ones((dims,dims)) ,iterations=itersDilation)
-        #dilation = cv2.filter2D(dilation,-1,self.kernel)
 
         
         return dilation
@@ -313,9 +312,13 @@ class Signal_Identifier:
             
             white = self.extractWhitePixels(preprocessed_image)
             whiteBin = self.extractWhitePixels(preprocessed_image)
+            #whiteFound,whiteBlobs = self.extractBlobs(whiteBin,(255, 255, 255))
+            #controursWhite = self.extractContours(whiteBlobs)
+            #aoiWhite = self.getAreaOfInterest(controursWhite,resizedImage)
+            whiteFound = False
 
 
-            flagOutput = redFound | blueFound
+            flagOutput = redFound | blueFound | whiteFound
 
 
             preprocessedOutput = self.bridge.cv2_to_imgmsg(preprocessed_image,encoding="bgr8")
@@ -344,8 +347,19 @@ class Signal_Identifier:
 
             # publish detected candidates flags
 
-            self.signalDetectedPub.publish(flagOutput)
 
+            self.signalDetectedPub.publish(flagOutput)
+            if flagOutput:
+                defOutput = redOutput
+                if redFound:
+                    defOutput = redOutput
+                elif blueFound:
+                    defOutput = blueOutput
+                else:
+                    defOutput = whiteOutput
+                    
+                self.outputImagePub.publish(defOutput)
+                
 
     def image_callback(self, msg):
         self.image = self.bridge.imgmsg_to_cv2(msg,desired_encoding="bgr8")

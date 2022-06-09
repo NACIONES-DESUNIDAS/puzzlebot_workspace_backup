@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 
 
+import queue
 import rospy, cv2
 
-from sensor_msgs import Image
-from std_msgs import String
+from sensor_msgs.msg import Image
+from std_msgs.msg import String, Bool
 import numpy as np
 from tensorflow.keras.models import load_model
 import tensorflow as tf
@@ -27,68 +28,78 @@ model = load_model("/home/puzzlebot/puzzlebot_ws/src/puzzlebot_vision/src/puzzle
 ROS_LABEL_PUBLISHER = "/puzzlebot/traffic_signals/predictions/"
 
 
-ROS_WHITE_SIGNAL_IMAGE = "/puzzlebot_vision/traffic_signals/white_image"
-ROS_RED_SIGNAL_IMAGE = "/puzzlebot_vision/traffic_signals/red_image"
-ROS_BLUE_SIGNAL_IMAGE = "/puzzlebot_vision/traffic_signals/blue_image"
+ROS_IMAGE_OUTPUT_TOPIC = '/puzzlebot_vision/traffic_signals/filtered_image'
+ROS_SIGNAL_DETECT_TOPIC = '/puzzlebot_vision/traffic_signals/signal_found'
 
 
-ROS_SIGNAL_DETECT_TOPIC = '/puzzlebot_vision/traffic_signals/red_signal_found'
-ROS_BLUE_SIGNAL_DETECT_TOPIC = '/puzzlebot_vision/traffic_signals/blue_signal_found'
-ROS_WHITE_SIGNAL_DETECT_TOPIC = '/puzzlebot_vision/traffic_signals/white_signal_found'
+
+RATE = 1
+IMG_SIZE = 150
+IMG_LABELS = ["aplastame","around_signal","left_signal","right_signal","stop_signal","up_signal"]
 
 
 class DetectStop():
 
-    def format_image(self,data):
-        aux_img = self.imgmsg_to_cv2(data)
-        aux_img = cv2.resize(aux_img, (frameWidth, frameHeight))
-        return aux_img
+
+    def __init__(self):
+
+        self.image = None
+        self.flag = None
+
+        self.imgSub = rospy.Subscriber(ROS_IMAGE_OUTPUT_TOPIC,Image,self.imageCallback)
+        self.flagSub = rospy.Subscriber(ROS_SIGNAL_DETECT_TOPIC,Image,self.flagCallback)
+
+        self.labelPub = rospy.Publisher(ROS_LABEL_PUBLISHER,String,queue_size=1)
+
+        self.labels = IMG_LABELS
+        self.imgSize = IMG_SIZE
+
+        rospy.init_node("puzzlebot_predictor_node")
+        rospy.init(RATE)
+
+
+
+    def imageCallback(self,img):
+        self.img = np.frombuffer(img.data, dtype=np.uint8).reshape(img.height, img.width, -1)
+        rospy.loginfo(self.img.shape)
+        
+    def flagCallback(self,msg):
+        self.flag = msg.data
+        rospy.loginfo(msg)
+        
+
 
     def imgmsg_to_cv2(self,msg):
         return np.frombuffer(msg.data, dtype=np.uint8).reshape(msg.height, msg.width, -1)
 
-    def grayscale(self,img):
-        # Grayscale the image
 
-        return img
 
-    def equalize(self,img):
+    def resize(self,img):
         # Equalize the histogram
-
+        img = cv2.resize(self.imgSize,self.imgSize)
+        img = cv2.reshape(1,self.imgSize,self.imgSize,3)
         return img
 
-    def preprocessing(self,img):
-        # TODO: Write grayscale and equalize functions using cv2
-        img = cv2.resize(img, (32, 32))
-        img = self.grayscale(img)
-        img = self.equalize(img)
-        img = img / 255
-        # the image needs to be reshaped to be used as an input tensor for tensorflow
-        return img.reshape(1, 32, 32, 1)
 
-    def __init__(self):
+    def preprocessing(self,image):
+        image = image.astype(np.uint8)
+        image_hsv = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
 
-        self.labelsPub = rospy.Publisher(ROS_LABEL_PUBLISHER,String,queue_size=10)
+        H, S, V = cv2.split(image_hsv)
 
-        """
-        self.redImgSub = rospy.Subscriber(ROS_RED_SIGNAL_IMAGE,Image)
-        self.blueImgSub = rospy.Subscriber(ROS_BLUE_SIGNAL_IMAGE,Image)
-        self.whiteImgSub = rospy.Subscriber(ROS_WHITE_SIGNAL_IMAGE,Image)
+        eq_H = cv2.equalizeHist(H)
+        eq_S = cv2.equalizeHist(S)
+        eq_V = cv2.equalizeHist(V)
+
+        image_eq_hsv = cv2.merge([H, S, eq_V])
+        image_eq_hsv = cv2.cvtColor(image_eq_hsv, cv2.COLOR_HSV2BGR)
+
+        return image_eq_hsv.astype(np.float64)/255
 
 
-        self.redFlagSub = rospy.Subscriber(ROS_RED_SIGNAL_IMAGE,String)
-        self.blueFlagSub = rospy.Subscriber(ROS_BLUE_SIGNAL_IMAGE,String)
-        self.whiteFlagSub = rospy.Subscriber(ROS_WHITE_SIGNAL_IMAGE,String)
-        """
-        redFlag = None
-        blueFlag = None
-        greenFlag = None
+    def imagePredict(self,img):
+        return self.labels[np.argmax(model.predict(img))]
 
-        redImage = None
-        blueImage = None
-        whiteImage = None
-
-    
 
     # function callbacks 
 
