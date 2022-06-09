@@ -2,6 +2,7 @@
 import cv2
 from cv2 import cvtColor
 from cv2 import merge
+from matplotlib.pyplot import draw
 import numpy as np
 import rospy, cv_bridge
 from sensor_msgs.msg import Image
@@ -154,11 +155,13 @@ class Signal_Identifier:
 
     def extractRedPixels(self, img):
 
-        upperRed = np.array([15,255,255])
-        lowerRed = np.array([0,150,150])
+
+        upperRed = np.array([10,255,255])
+        lowerRed = np.array([0,150,196])
 
         upperRed2 = np.array([180,255,255])
-        lowerRed2 = np.array([170,150,150])
+        lowerRed2 = np.array([170,150,196])
+        lowerRed2 = np.array([170,170,200])
 
         hsv = cv2.cvtColor(img.copy(),cv2.COLOR_BGR2HSV)
         hsv = self.equalizeSV(hsv)
@@ -179,7 +182,7 @@ class Signal_Identifier:
     def extractBluePixels(self, img):
 
         upperBlue = np.array([105,255,255])
-        lowerBlue = np.array([95,175,175])        
+        lowerBlue = np.array([98,240,240])        
         hsv = cv2.cvtColor(img.copy(),cv2.COLOR_BGR2HSV)
         hsv = self.equalizeSV(hsv)
 
@@ -195,8 +198,8 @@ class Signal_Identifier:
 
         #upperWhite = np.array([0,50,255])
         #lowerWhite = np.array([0,0,0])
-        upperWhite = np.array([255,255,255])
-        lowerWhite = np.array([150,150,150])         
+        upperWhite = np.array([255,50,255])
+        lowerWhite = np.array([150,0,150])         
         hsv = cv2.cvtColor(img.copy(),cv2.COLOR_BGR2RGB)
         #hsv = self.equalizeSV(hsv)
 
@@ -213,11 +216,11 @@ class Signal_Identifier:
 
         gray = cv2.cvtColor(masked,cv2.COLOR_BGR2GRAY)
         threshold,thresh = cv2.threshold(gray,0,255,cv2.THRESH_BINARY_INV+cv2.THRESH_OTSU)
-        erotion = cv2.erode(src=thresh,kernel=np.ones((dims,dims)) ,iterations=itersErotion)
-        dilation = cv2.dilate(src=erotion,kernel=np.ones((dims,dims)) ,iterations=itersDilation)
+        dilation = cv2.dilate(src=thresh,kernel=np.ones((dims,dims)) ,iterations=itersDilation)
+        erotion = cv2.erode(src=dilation,kernel=np.ones((dims,dims)) ,iterations=itersErotion)
 
         
-        return dilation
+        return erotion
 
 
 
@@ -231,7 +234,7 @@ class Signal_Identifier:
         params.filterByCircularity = True
         params.minCircularity = 0.7
         params.filterByArea = True
-        params.minArea = 5000
+        params.minArea = 1500
         params.maxArea = 60000
         detector = cv2.SimpleBlobDetector_create(params)
         keypoints = detector.detect(img)
@@ -243,7 +246,7 @@ class Signal_Identifier:
             for keypoint in keypoints:
                 x = int(keypoint.pt[0])
                 y = int(keypoint.pt[1])
-                rad = int(keypoint.size/2)
+                rad = int((keypoint.size/2)+10)
                 black = cv2.circle(black, (x,y), rad,color , -1)
                 #print(x,y,rad)
 
@@ -251,23 +254,30 @@ class Signal_Identifier:
 
     def extractContours(self,img):
         CONTOUR_THRESHOLD = 50000
-        img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+        #img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
         retval, img = cv2.threshold(img, 225, 255, cv2.THRESH_BINARY_INV)
         (contours, _) = cv2.findContours(img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     
-        contours = [contour for contour in contours if cv2.contourArea(contour) < 50000.0]
+        #contours = [contour for contour in contours if cv2.contourArea(contour) > 1000 and cv2.contourArea(contour) < 20000 ]
+        defContours = list()
+        for contour in contours:
+            aprox = cv2.approxPolyDP(contour,0.01*cv2.arcLength(contour,True),True)
+            area = cv2.contourArea(contour)
+            if len(aprox > 8) and area > 4000 and area < 6000:
+                defContours.append(contour)
 
-        return contours
+        return defContours
 
 
     def getAreaOfInterest(self,contours,drawImage):
         if len(contours) > 0:
             #contoursImage = cv2.drawContours(drawImage, contours, -1, (0,255,0), 3)
-            #for contour in contours:
-            contour = contours[0]
-            x,y,w,h = cv2.boundingRect(contour)
-            #contoursImage = cv2.rectangle(contoursImage, (x,y), (x+w,y+h), (200,0,200),2)
-            contoursImage = drawImage[y: y + h, x: x + w]
+            contoursImage = drawImage.copy()
+            for contour in contours:
+                #contour = contours[0]
+                x,y,w,h = cv2.boundingRect(contour)
+                contoursImage = cv2.rectangle(contoursImage, (x,y), (x+w,y+h), (200,0,200),2)
+            #contoursImage = drawImage[y: y + h, x: x + w]
             return contoursImage
         else: 
             return drawImage
@@ -292,9 +302,9 @@ class Signal_Identifier:
 
 
             red = self.extractRedPixels(preprocessed_image)
-            redBin = self.binarizeImage(red,itersDilation=2,itersErotion=8,dims = 5)
+            redBin = self.binarizeImage(red,itersDilation=1,itersErotion=1,dims = 3)
             redFound,redBlobs = self.extractBlobs(redBin,(255, 255, 255))
-            controursRed = self.extractContours(redBlobs)
+            controursRed = self.extractContours(redBin)
             aoiRed = self.getAreaOfInterest(controursRed,resizedImage)
 
 
@@ -304,9 +314,9 @@ class Signal_Identifier:
 
 
             blue = self.extractBluePixels(preprocessed_image)
-            blueBin = self.binarizeImage(blue,itersErotion=5,itersDilation=3,dims =7)
+            blueBin = self.binarizeImage(blue,itersErotion=5,itersDilation=0,dims =5)
             blueFound,blueBlobs = self.extractBlobs(blueBin,(255, 255, 255))
-            controursBlue = self.extractContours(blueBlobs)
+            controursBlue = self.extractContours(blueBin)
             aoiBlue = self.getAreaOfInterest(controursBlue,resizedImage)
 
             
