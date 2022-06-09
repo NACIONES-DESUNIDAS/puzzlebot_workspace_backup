@@ -24,6 +24,7 @@ MATT = [[1/9,1/9,1/9],[1/9,1/9,1/9],[1/9,1/9,1/9]]
 
 
 # ROS Topics used to publish the desired output messages
+ROS_PREPROCESSED_TOPIC = '/puzzlebot_vision/traffic_lights/preprocessed_image'
 ROS_IMAGE_OUTPUT_TOPIC = '/puzzlebot_vision/traffic_lights/filtered_image'
 ROS_RED_LIGHT_DETECT_TOPIC = '/puzzlebot_vision/traffic_lights/red_light'
 ROS_GREEN_LIGHT_DETECT_TOPIC = '/puzzlebot_vision/traffic_lights/green_light'
@@ -74,10 +75,11 @@ class TrafficLightsDetector:
 
         self.red_image_pub = rospy.Publisher("red_binarized", Image, queue_size = 10)
 
+        self.preprocessed_image_pub = rospy.Publisher(ROS_PREPROCESSED_TOPIC,Image,queue_size=10)
+
         # Initialize Publishers that will send Bool messages if a red or green traffic light is detected
         self.red_light_detected_pub = rospy.Publisher(ROS_RED_LIGHT_DETECT_TOPIC, Bool, queue_size = 10)
         self.green_light_detected_pub = rospy.Publisher(ROS_GREEN_LIGHT_DETECT_TOPIC, Bool, queue_size = 10)
-        
         # Initialize a rospy node with the name 'puzzlebot_traffic_lights'.
         rospy.init_node('puzzlebot_traffic_lights')
 
@@ -87,6 +89,10 @@ class TrafficLightsDetector:
         self.ranges = {"red":(np.array(UPPER_RED),np.array(LOWER_RED)),"green":(np.array(UPPER_GREEN),np.array(LOWER_GREEN))}        
         
         self.kernel = np.ones((5,5), np.uint8) # np.array(MATT,dtype=np.uint8)
+
+
+    def sliceImage(self,img):
+        return img[:int(img.shape[1]*0.6),:,:]
 
 
     def preprocessImage(self, img):
@@ -103,7 +109,11 @@ class TrafficLightsDetector:
         # Your code here...
         width = int(img.shape[0]*self.img_scale_factor/100)
         height = int(img.shape[1]*self.img_scale_factor/100)
+
+
         img = cv2.resize(img,(height,width))
+        img = cv2.rotate(img,cv2.ROTATE_180)
+        img =  img[:175,:,:]
         img =cv2.GaussianBlur(img,(7,7),0)
 
         ##########################################################################################################
@@ -166,7 +176,7 @@ class TrafficLightsDetector:
         
         return masked
 
-    def binarizeImage(self, masked,iters=5):
+    def binarizeImage(self, masked,erotionIters=5,dilationIters = 5):
         # Method used to binarize a colored input image, the image processing must be divided in:
         # 1 - Convert the image to a grayscale color space.
         # 2 - Use the requierd OpenCV function to binarize the image selecting an adequate theshold value.
@@ -180,8 +190,8 @@ class TrafficLightsDetector:
         # Your code here...
         gray = cv2.cvtColor(masked,cv2.COLOR_BGR2GRAY)
         threshold,thresh = cv2.threshold(gray,0,255,cv2.THRESH_BINARY_INV+cv2.THRESH_OTSU)
-        erotion = cv2.erode(src=thresh,kernel=self.kernel ,iterations=iters)
-        dilation = cv2.dilate(src=erotion,kernel=self.kernel ,iterations=iters)
+        erotion = cv2.erode(src=thresh,kernel=self.kernel ,iterations=erotionIters)
+        dilation = cv2.dilate(src=erotion,kernel=self.kernel ,iterations=dilationIters)
 
         ##########################################################################################################
         
@@ -206,11 +216,13 @@ class TrafficLightsDetector:
 
         # Your code here...
         params = cv2.SimpleBlobDetector_Params()
+        
         params.filterByCircularity = True
         params.minCircularity = 0.6
         params.filterByArea = True
-        params.minArea = 5000
-        params.maxArea = 60000
+        params.minArea = 50
+        params.maxArea = 5000
+        
         detector = cv2.SimpleBlobDetector_create(params)
         keypoints = detector.detect(img)
         m = np.zeros(img.shape,dtype = np.uint8)
@@ -236,7 +248,7 @@ class TrafficLightsDetector:
             red_pixel_image = self.extractRedPixels(preprocessed_image)
             green_pixel_image = self.extractGreenPixels(preprocessed_image)
 
-            red_pixel_binarized_image = self.binarizeImage(red_pixel_image)
+            red_pixel_binarized_image = self.binarizeImage(red_pixel_image,dilationIters=1,erotionIters=1)
             green_pixel_binarized_image = self.binarizeImage(green_pixel_image)
 
 
@@ -252,13 +264,16 @@ class TrafficLightsDetector:
             output = self.bridge.cv2_to_imgmsg(filtered_image,encoding="bgr8")
             output2 = self.bridge.cv2_to_imgmsg(red_pixel_binarized_image)
             output3 = self.bridge.cv2_to_imgmsg(green_pixel_binarized_image)
-
+            output4 = self.bridge.cv2_to_imgmsg(preprocessed_image,encoding="bgr8")
+            
             ##########################################################################################################
 
             self.image_pub.publish(output)
 
             self.red_image_pub.publish(output2)
             self.green_image_pub.publish(output3)
+
+            self.preprocessed_image_pub.publish(output4)
 
             self.red_light_detected_pub.publish(red_pixel_blob_found)
 

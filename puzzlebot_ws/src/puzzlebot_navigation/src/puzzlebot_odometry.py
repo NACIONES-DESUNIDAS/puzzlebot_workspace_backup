@@ -84,7 +84,7 @@ class Odometry:
             last_time = current_time
             current_time = rospy.get_time()
             dt = current_time-last_time
-            rospy.loginfo("time differential: %s",dt)
+            # rospy.loginfo("time differential: %s",dt)
             x = position.x
             y = position.y
             theta = position.theta
@@ -108,7 +108,7 @@ class Odometry:
             ##########################################################################################################
 
             # Publish message and sleep
-            rospy.loginfo(position)
+            # rospy.loginfo(position)
             self.pose_pub.publish(position)
             self.rate.sleep()
 

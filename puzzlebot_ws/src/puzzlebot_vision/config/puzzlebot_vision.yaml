@@ -23,3 +23,11 @@ puzzlebot_vision:
     topics:
       # Camera topic where the vision node will extract the input Image messages
       camera_topic: '/video_source/raw'
+
+  traffic_signals:
+    parameters:
+      signal_detection_pub_rate: 10
+      img_scale_factor: 50
+ 
+    topics:
+      camera_topic: '/video_source/raw'

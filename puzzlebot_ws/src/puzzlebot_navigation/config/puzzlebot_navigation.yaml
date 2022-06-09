@@ -2,8 +2,10 @@ parameters:
   /puzzlebot_navigation/parameters/base: 0.192
   /puzzlebot_navigation/parameters/radius: 0.05
   /puzzlebot_navigation/parameters/odometry_pub_rate: 50
-  /puzzlebot_navigation/parameters/kp: 0.7
-  /puzzlebot_navigation/parameters/kd: 0.7
+  /puzzlebot_navigation/parameters/kp: 0.1
+  /puzzlebot_navigation/parameters/kd: 0.1
   /puzzlebot_navigation/parameters/thetaThreshold: 0.17453292519943295 
   /puzzlebot_navigation/parameters/distanceThreshold: 0.1
   /puzzlebot_navigation/parameters/linearVel: 0.1
+  /puzzlebot_navigation/parameters/greenBlobTopic: "/puzzlebot_vision/traffic_lights/green_light"
+  /puzzlebot_navigation/parameters/redBlobTopic: "/puzzlebot_vision/traffic_lights/red_light"

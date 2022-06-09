@@ -49,9 +49,9 @@ ROS_IMAGE_OUTPUT_TOPIC = '/puzzlebot_vision/traffic_signals/filtered_image'
 
 
 # traffic signals topics
-ROS_RED_SIGNAL_DETECT_TOPIC = '/puzzlebot_vision/traffic_signals/red_signal'
-ROS_BLUE_SIGNAL_DETECT_TOPIC = '/puzzlebot_vision/traffic_signals/blue_signal'
-ROS_WHITE_SIGNAL_DETECT_TOPIC = '/puzzlebot_vision/traffic_signals/white_signal'
+ROS_SIGNAL_DETECT_TOPIC = '/puzzlebot_vision/traffic_signals/signal_found'
+#ROS_BLUE_SIGNAL_DETECT_TOPIC = '/puzzlebot_vision/traffic_signals/blue_signal_found'
+#ROS_WHITE_SIGNAL_DETECT_TOPIC = '/puzzlebot_vision/traffic_signals/white_signal_found'
 
 
 
@@ -107,9 +107,9 @@ class Signal_Identifier:
 
 
         # detection flags for potential candidates
-        self.redSignalDetectedPub = rospy.Publisher(ROS_RED_SIGNAL_DETECT_TOPIC, Bool, queue_size = 10)
-        self.blueSignalDetectedPub = rospy.Publisher(ROS_BLUE_SIGNAL_DETECT_TOPIC, Bool, queue_size = 10)
-        self.whiteSignalDetectedPub = rospy.Publisher(ROS_WHITE_SIGNAL_DETECT_TOPIC, Bool, queue_size = 10)
+        self.signalDetectedPub = rospy.Publisher(ROS_SIGNAL_DETECT_TOPIC, Bool, queue_size = 10)
+        #self.blueSignalDetectedPub = rospy.Publisher(ROS_BLUE_SIGNAL_DETECT_TOPIC, Bool, queue_size = 10)
+        #self.whiteSignalDetectedPub = rospy.Publisher(ROS_WHITE_SIGNAL_DETECT_TOPIC, Bool, queue_size = 10)
 
 
         # Initialize a rospy node with the name 'puzzlebot_traffic_lights'.
@@ -138,9 +138,10 @@ class Signal_Identifier:
         height = int(img.shape[1]*self.img_scale_factor/100)
         img = cv2.resize(img,(height,width))
         img = cv2.rotate(img,cv2.ROTATE_180)
+        resized = img.copy()
         img =cv2.GaussianBlur(img,(7,7),0)
         ##########################################################################################################
-        return img
+        return img,resized
 
 
     def equalizeSV(self,hsv):
@@ -154,13 +155,13 @@ class Signal_Identifier:
     def extractRedPixels(self, img):
 
         upperRed = np.array([15,255,255])
-        lowerRed = np.array([0,110,110])
+        lowerRed = np.array([0,150,150])
 
         upperRed2 = np.array([180,255,255])
-        lowerRed2 = np.array([170,110,110])
+        lowerRed2 = np.array([170,150,150])
 
         hsv = cv2.cvtColor(img.copy(),cv2.COLOR_BGR2HSV)
-        #hsv = self.equalizeSV(hsv)
+        hsv = self.equalizeSV(hsv)
 
 
         filtered = cv2.inRange(hsv,lowerb=lowerRed,upperb=upperRed)
@@ -178,9 +179,9 @@ class Signal_Identifier:
     def extractBluePixels(self, img):
 
         upperBlue = np.array([105,255,255])
-        lowerBlue = np.array([90,88,88])        
+        lowerBlue = np.array([95,175,175])        
         hsv = cv2.cvtColor(img.copy(),cv2.COLOR_BGR2HSV)
-        #hsv = self.equalizeSV(hsv)
+        hsv = self.equalizeSV(hsv)
 
         filtered = cv2.inRange(hsv,lowerb=lowerBlue,upperb=upperBlue)
         masked = cv2.bitwise_and(img,img,mask=filtered)
@@ -192,9 +193,11 @@ class Signal_Identifier:
 
     def extractWhitePixels(self, img):
 
-        upperWhite = np.array([0,50,255])
-        lowerWhite = np.array([0,0,0])        
-        hsv = cv2.cvtColor(img.copy(),cv2.COLOR_BGR2HSV)
+        #upperWhite = np.array([0,50,255])
+        #lowerWhite = np.array([0,0,0])
+        upperWhite = np.array([255,255,255])
+        lowerWhite = np.array([150,150,150])         
+        hsv = cv2.cvtColor(img.copy(),cv2.COLOR_BGR2RGB)
         #hsv = self.equalizeSV(hsv)
 
         filtered = cv2.inRange(hsv,lowerb=lowerWhite,upperb=upperWhite)
@@ -206,11 +209,11 @@ class Signal_Identifier:
     
 
 
-    def binarizeImage(self, masked,itersErotion=5,itersDilation = 5,dims = 5):
+    def binarizeImage(self, masked,itersErotion=5,itersDilation = 10,dims = 5):
 
         gray = cv2.cvtColor(masked,cv2.COLOR_BGR2GRAY)
         threshold,thresh = cv2.threshold(gray,0,255,cv2.THRESH_BINARY_INV+cv2.THRESH_OTSU)
-        erotion = cv2.erode(src=thresh,kernel=np.ones((dims,dims)) ,iterations=itersErotion)
+        #erotion = cv2.erode(src=thresh,kernel=np.ones((dims,dims)) ,iterations=itersErotion)
         dilation = cv2.dilate(src=erotion,kernel=np.ones((dims,dims)) ,iterations=itersDilation)
         #dilation = cv2.filter2D(dilation,-1,self.kernel)
 
@@ -227,9 +230,9 @@ class Signal_Identifier:
 
         params = cv2.SimpleBlobDetector_Params()
         params.filterByCircularity = True
-        params.minCircularity = 0.8
+        params.minCircularity = 0.7
         params.filterByArea = True
-        params.minArea = 1000
+        params.minArea = 5000
         params.maxArea = 60000
         detector = cv2.SimpleBlobDetector_create(params)
         keypoints = detector.detect(img)
@@ -260,11 +263,11 @@ class Signal_Identifier:
 
     def getAreaOfInterest(self,contours,drawImage):
         if len(contours) > 0:
-            contoursImage = cv2.drawContours(drawImage, contours, -1, (0,255,0), 3)
+            #contoursImage = cv2.drawContours(drawImage, contours, -1, (0,255,0), 3)
             #for contour in contours:
             contour = contours[0]
             x,y,w,h = cv2.boundingRect(contour)
-            contoursImage = cv2.rectangle(contoursImage, (x,y), (x+w,y+h), (200,0,200),2)
+            #contoursImage = cv2.rectangle(contoursImage, (x,y), (x+w,y+h), (200,0,200),2)
             contoursImage = drawImage[y: y + h, x: x + w]
             return contoursImage
         else: 
@@ -286,14 +289,14 @@ class Signal_Identifier:
                 continue
 
             src_frame = self.image
-            preprocessed_image = self.preprocessImage(src_frame)
+            preprocessed_image,resizedImage = self.preprocessImage(src_frame)
 
 
             red = self.extractRedPixels(preprocessed_image)
-            redBin = self.binarizeImage(red,itersDilation=2,itersErotion=4,dims = 5)
-            found,redBlobs = self.extractBlobs(redBin,(255, 255, 255))
+            redBin = self.binarizeImage(red,itersDilation=2,itersErotion=8,dims = 5)
+            redFound,redBlobs = self.extractBlobs(redBin,(255, 255, 255))
             controursRed = self.extractContours(redBlobs)
-            aoiRed = self.getAreaOfInterest(controursRed,preprocessed_image)
+            aoiRed = self.getAreaOfInterest(controursRed,resizedImage)
 
 
 
@@ -302,16 +305,17 @@ class Signal_Identifier:
 
 
             blue = self.extractBluePixels(preprocessed_image)
-            blueBin = self.binarizeImage(blue,itersErotion=4,itersDilation=1,dims =7)
-            found,blueBlobs = self.extractBlobs(blueBin,(255, 255, 255))
+            blueBin = self.binarizeImage(blue,itersErotion=5,itersDilation=3,dims =7)
+            blueFound,blueBlobs = self.extractBlobs(blueBin,(255, 255, 255))
             controursBlue = self.extractContours(blueBlobs)
-            aoiBlue = self.getAreaOfInterest(controursBlue,preprocessed_image)
+            aoiBlue = self.getAreaOfInterest(controursBlue,resizedImage)
 
             
             white = self.extractWhitePixels(preprocessed_image)
             whiteBin = self.extractWhitePixels(preprocessed_image)
 
 
+            flagOutput = redFound | blueFound
 
 
             preprocessedOutput = self.bridge.cv2_to_imgmsg(preprocessed_image,encoding="bgr8")
@@ -337,6 +341,10 @@ class Signal_Identifier:
             self.redBinImagePub.publish(redBinOutput)
             self.whiteBinImagePub.publish(whiteBinOutput)
             self.blueBinImagePub.publish(blueBinOutput)
+
+            # publish detected candidates flags
+
+            self.signalDetectedPub.publish(flagOutput)
 
 
     def image_callback(self, msg):
