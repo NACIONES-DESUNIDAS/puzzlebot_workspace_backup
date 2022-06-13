@@ -25,7 +25,7 @@ brightness = 180
 model = load_model("/home/puzzlebot/puzzlebot_ws/src/puzzlebot_vision/src/puzzlebot_model.h5")
 
 
-ROS_LABEL_PUBLISHER = "/puzzlebot/traffic_signals/predictions/"
+ROS_LABEL_PUBLISHER = "/puzzlebot/traffic_signals/predictions"
 
 
 # ROS SUbscribers
@@ -33,17 +33,18 @@ ROS_IMAGE_OUTPUT_TOPIC = '/puzzlebot_vision/traffic_signals/image_segmentation'
 ROS_SIGNAL_DETECT_TOPIC = '/puzzlebot_vision/traffic_signals/signal_found'
 
 
-
-RATE = 1
-IMG_SIZE = 150
-IMG_LABELS = ["aplastame","around_signal","left_signal","right_signal","stop_signal","up_signal"]
+# parameter server stuff (quizas algun dia...)
+IMG_SHAPE = (150,150,1)
+IMG_TUPPLE_SHAPE = (150,150)
+dims = 150
+RATE = 30
 
 
 class DetectStop():
 
 
-    def __init__(self):
 
+    def __init__(self):
 
         self.image = None
         self.flag = None
@@ -59,56 +60,59 @@ class DetectStop():
 
 
     def imageCallback(self,img):
-        self.img = np.frombuffer(img.data, dtype=np.uint8).reshape(img.height, img.width, -1)
-        rospy.loginfo(self.img.shape)
-        
+        self.image = np.frombuffer(img.data, dtype=np.uint8).reshape(img.height, img.width, -1)
+        rospy.loginfo("sutff")
+
+
     def flagCallback(self,msg):
         self.flag = msg.data
-        rospy.loginfo(msg)
         
 
 
-    def imgmsg_to_cv2(self,msg):
-        return np.frombuffer(msg.data, dtype=np.uint8).reshape(msg.height, msg.width, -1)
 
 
-
-    def resize(self,img):
-        # Equalize the histogram
-        img = cv2.resize(self.imgSize,self.imgSize)
-        img = cv2.reshape(1,self.imgSize,self.imgSize,3)
-        return img
-
-
-    def preprocessing(self,image):
+    def imageProcessing(self,image):
         image = image.astype(np.uint8)
-        image_hsv = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
-
-        H, S, V = cv2.split(image_hsv)
-
-        eq_H = cv2.equalizeHist(H)
-        eq_S = cv2.equalizeHist(S)
-        eq_V = cv2.equalizeHist(V)
-
-        image_eq_hsv = cv2.merge([H, S, eq_V])
-        image_eq_hsv = cv2.cvtColor(image_eq_hsv, cv2.COLOR_HSV2BGR)
-
-        return image_eq_hsv.astype(np.float64)/255
+        gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
+        gray = cv2.equalizeHist(gray)
+        gray = cv2.resize(gray,IMG_TUPPLE_SHAPE)
+        gray = gray.reshape(1,dims,dims,1)
+        return gray.astype(np.float64)/255
 
 
-    def imagePredict(self,img):
-        return self.labels[np.argmax(model.predict(img))]
+
+    def getCalssName(classNo):
+        labels = {0: 'stop_signal', 1: 'aplastame', 2: 'right_signal', 3: 'left_signal', 4: 'up_signal', 5: 'around_signal'}
+        return labels[classNo]
+
 
 
     # function callbacks 
 
     def run(self):
-        rospy.loginfo("run")
+
+        while not rospy.is_shutdown():
+            if self.image is None:
+                self.rate.sleep()
+                continue
+
+            
+            
+            frame = self.image
+            img = self.imageProcessing(frame)
+
+
+            #prediction = model.predict(img)
+            #index = np.argmax(prediction)
+            #label = self.getCalssName(index)
+            #self.labelPub.publish(label)
+
+           
+            self.image = None
+
+            
 
 
 if __name__ == '__main__':
     predictor = DetectStop()
-    try:
-        predictor.run()
-    except rospy.ROSInterruptException:
-        pass
+    predictor.run()
