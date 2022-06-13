@@ -20,7 +20,7 @@ TIME_THRESHOLD = 3.5
 THETA_THRESHOLD = 10.0 * pi / 180.0
 DIST_THRESHOLD = 0.1
 
-COUNTER_THRESHOLD = 2
+COUNTER_THRESHOLD = 4
 
 ROS_RED_LIGHT_DETECT_TOPIC = '/puzzlebot_vision/traffic_lights/red_light'
 ROS_GREEN_LIGHT_DETECT_TOPIC = '/puzzlebot_vision/traffic_lights/green_light'
