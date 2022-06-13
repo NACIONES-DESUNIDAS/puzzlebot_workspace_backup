@@ -32,7 +32,6 @@ Señal detectada
 """
 ROS_IMAGE_OUTPUT_TOPIC = '/puzzlebot_vision/traffic_signals/image_segmentation'
 ROS_IMAGE_SQUARE_TOPIC = "/puzzlebot_vision/traffic_signals/bounding_boxes"
-ROS_SIGNAL_DETECT_TOPIC = '/puzzlebot_vision/traffic_signals/signal_found'
 
 
 
@@ -71,7 +70,6 @@ class Signal_Identifier:
 
         # publishers
 
-        self.signalDetectedPub = rospy.Publisher(ROS_SIGNAL_DETECT_TOPIC, Bool, queue_size = 10)
         self.outputImagePub = rospy.Publisher(ROS_IMAGE_OUTPUT_TOPIC,Image,queue_size=10)
         self.boxesImagePub = rospy.Publisher(ROS_IMAGE_SQUARE_TOPIC,Image,queue_size=10)
 
@@ -150,8 +148,7 @@ class Signal_Identifier:
             img = self.preprocessImage(frame)
 
             circles = self.getHoughCircles(img)
-            flag = True if circles is not None else False
-            self.signalDetectedPub.publish(flag)
+
 
             self.pubSegementedImages(circles,img)
             #self.rate.sleep()

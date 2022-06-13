@@ -24,13 +24,11 @@ brightness = 180
 
 model = load_model("/home/puzzlebot/puzzlebot_ws/src/puzzlebot_vision/src/puzzlebot_model.h5")
 
-
-ROS_LABEL_PUBLISHER = "/puzzlebot/traffic_signals/predictions"
-
-
-# ROS SUbscribers
+# Subscriber
 ROS_IMAGE_OUTPUT_TOPIC = '/puzzlebot_vision/traffic_signals/image_segmentation'
+# Ros Publisher
 ROS_SIGNAL_DETECT_TOPIC = '/puzzlebot_vision/traffic_signals/signal_found'
+ROS_LABEL_PUBLISHER = "/puzzlebot/traffic_signals/predictions"
 
 
 # parameter server stuff (quizas algun dia...)
@@ -50,9 +48,15 @@ class DetectStop():
         self.flag = None
 
         self.imgSub = rospy.Subscriber(ROS_IMAGE_OUTPUT_TOPIC,Image,self.imageCallback)
-        self.flagSub = rospy.Subscriber(ROS_SIGNAL_DETECT_TOPIC,Bool,self.flagCallback)
 
         self.labelPub = rospy.Publisher(ROS_LABEL_PUBLISHER,String,queue_size=1)
+        self.detectedFlagPub = rospy.Publisher(ROS_SIGNAL_DETECT_TOPIC,Bool,queue_size=1)
+
+        # classatributes
+        self.lastLabel = None
+        self.labelCounter = 0
+        self.labelThreshold = 4
+
 
         rospy.init_node("puzzlebot_predictor_node")
         self.rate = rospy.Rate(RATE)
@@ -62,12 +66,6 @@ class DetectStop():
     def imageCallback(self,img):
         self.image = np.frombuffer(img.data, dtype=np.uint8).reshape(img.height, img.width, -1)
         rospy.loginfo("sutff")
-
-
-    def flagCallback(self,msg):
-        self.flag = msg.data
-        
-
 
 
 
@@ -87,6 +85,18 @@ class DetectStop():
 
 
 
+
+    def pubLabelFlag(self,label):
+        if self.lastLabel == label:
+            self.labelCounter += 1
+        if self.labelCounter > self.labelThreshold:
+            self.labelCounter = 0
+            flag = True if self.lastLabel != "not_found" else False
+            self.labelPub.publish(self.lastLabel)
+            self.detectedFlagPub.publish(flag)
+
+        self.lastLabel = label
+
     # function callbacks 
 
     def run(self):
@@ -102,11 +112,11 @@ class DetectStop():
             img = self.imageProcessing(frame)
 
 
-            #prediction = model.predict(img)
-            #index = np.argmax(prediction)
-            #label = self.getCalssName(index)
+            prediction = model.predict(img)
+            index = np.argmax(prediction)
+            label = self.getCalssName(index)
             #self.labelPub.publish(label)
-
+            self.pubLabelFlag(label=label)
            
             self.image = None
 
