@@ -3,7 +3,7 @@ import rospy
 import actionlib
 from math import pi
 from std_msgs.msg import Bool, String
-from geometry_msgs.msg import Pose2D
+from geometry_msgs.msg import Pose2D, Twist
 from puzzlebot_msgs.msg import GoToPoseAction, GoToPoseGoal, GoToPoseFeedback, GoToPoseResult
 
 ROS_RED_LIGHT_DETECT_TOPIC = '/puzzlebot_vision/traffic_lights/red_light'
@@ -12,16 +12,18 @@ ROS_GREEN_LIGHT_DETECT_TOPIC = '/puzzlebot_vision/traffic_lights/green_light'
 ROS_SIGNAL_DETECT_TOPIC = '/puzzlebot_vision/traffic_signals/signal_found'
 ROS_SIGNAL_LABEL_TOPIC = '/puzzlebot_vision/traffic_signals/prediction'
 
+CMD_VEL = "/cmd_vel"
+CMD_VEL_GO_2_GOAL = "/cmd_vel/go_2_goal"
+CMD_VEL_LINE_DETECT = "/cmd_vel/line_detect"
+
 class Controller():
     def __init__(self):
         self.pose2d = Pose2D()
         self.pose2d.x = 0.0
         self.pose2d.y = 0.0
         self.pose2d.theta = 0.0
-        # Initialize a rospy node so that the SimpleActionClient can publish and subscribe over ROS.
+
         rospy.init_node('puzzlebot_run')
-        # Creates the SimpleActionClient, passing the type of the action (GoToPoseAction) to the constructor.
-        # The name of the Action Server must be provided, in this case 'puzzlebot_navigation'
 
         ##################
 
@@ -29,7 +31,6 @@ class Controller():
 
         ##################
 
-        # Waits until the action server has started up and started listening for goals.
         self.client.wait_for_server()
 
         self.dist = 0.5
@@ -37,6 +38,8 @@ class Controller():
         ##################
 
         self.poseSub = rospy.Subscriber("/pose2d",Pose2D,self.poseCallback)
+        self.cmd_vel_go_2_goal_pub = rospy.Publisher(CMD_VEL_GO_2_GOAL,Twist,self.go_2_goal_callback)
+        self.cmd_vel_line_detect_pub = rospy.Publisher(CMD_VEL_LINE_DETECT,Twist,self.line_detect_callback)
 
         ##################
 
