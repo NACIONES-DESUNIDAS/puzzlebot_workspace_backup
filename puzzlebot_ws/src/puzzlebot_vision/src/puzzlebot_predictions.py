@@ -28,7 +28,8 @@ model = load_model("/home/puzzlebot/puzzlebot_ws/src/puzzlebot_vision/src/puzzle
 ROS_LABEL_PUBLISHER = "/puzzlebot/traffic_signals/predictions/"
 
 
-ROS_IMAGE_OUTPUT_TOPIC = '/puzzlebot_vision/traffic_signals/filtered_image'
+# ROS SUbscribers
+ROS_IMAGE_OUTPUT_TOPIC = '/puzzlebot_vision/traffic_signals/image_segmentation'
 ROS_SIGNAL_DETECT_TOPIC = '/puzzlebot_vision/traffic_signals/signal_found'
 
 
@@ -43,19 +44,17 @@ class DetectStop():
 
     def __init__(self):
 
+
         self.image = None
         self.flag = None
 
         self.imgSub = rospy.Subscriber(ROS_IMAGE_OUTPUT_TOPIC,Image,self.imageCallback)
-        self.flagSub = rospy.Subscriber(ROS_SIGNAL_DETECT_TOPIC,Image,self.flagCallback)
+        self.flagSub = rospy.Subscriber(ROS_SIGNAL_DETECT_TOPIC,Bool,self.flagCallback)
 
         self.labelPub = rospy.Publisher(ROS_LABEL_PUBLISHER,String,queue_size=1)
 
-        self.labels = IMG_LABELS
-        self.imgSize = IMG_SIZE
-
         rospy.init_node("puzzlebot_predictor_node")
-        rospy.init(RATE)
+        self.rate = rospy.Rate(RATE)
 
 
 
