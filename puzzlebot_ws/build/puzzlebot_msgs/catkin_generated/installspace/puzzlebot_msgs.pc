@@ -1,4 +1,4 @@
-prefix=/home/puzzlebot/puzzlebot_ws/install
+prefix=/home/lftronic/Documents/code/ROS/puzzlebot_workspace_backup/puzzlebot_ws/install
 
 Name: puzzlebot_msgs
 Description: Description of puzzlebot_msgs

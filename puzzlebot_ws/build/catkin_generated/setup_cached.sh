@@ -7,4 +7,8 @@
 # new environment variables
 
 # modified environment variables
-export PWD='/home/puzzlebot/puzzlebot_ws/build'
+export LD_LIBRARY_PATH='/opt/ros/melodic/lib'
+export PKG_CONFIG_PATH='/opt/ros/melodic/lib/pkgconfig'
+export PWD='/home/lftronic/Documents/code/ROS/puzzlebot_workspace_backup/puzzlebot_ws/build'
+export PYTHONPATH='/opt/ros/melodic/lib/python2.7/dist-packages'
+export ROS_PACKAGE_PATH='/home/lftronic/Documents/code/ROS/puzzlebot_workspace_backup/puzzlebot_ws/src:/opt/ros/melodic/share'

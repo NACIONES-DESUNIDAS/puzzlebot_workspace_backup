@@ -2,7 +2,7 @@
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
-  set(CMAKE_INSTALL_PREFIX "/home/puzzlebot/puzzlebot_ws/install")
+  set(CMAKE_INSTALL_PREFIX "/home/lftronic/Documents/code/ROS/puzzlebot_workspace_backup/puzzlebot_ws/install")
 endif()
 string(REGEX REPLACE "/$" "" CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 

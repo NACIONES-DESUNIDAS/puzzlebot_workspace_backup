@@ -1,8 +1,8 @@
-prefix=/home/puzzlebot/puzzlebot_ws/devel
+prefix=/home/lftronic/Documents/code/ROS/puzzlebot_workspace_backup/puzzlebot_ws/devel
 
 Name: puzzlebot_msgs
 Description: Description of puzzlebot_msgs
 Version: 0.0.0
-Cflags: -I/home/puzzlebot/puzzlebot_ws/devel/include
+Cflags: -I/home/lftronic/Documents/code/ROS/puzzlebot_workspace_backup/puzzlebot_ws/devel/include
 Libs: -L${prefix}/lib 
 Requires: actionlib_msgs std_msgs message_runtime geometry_msgs

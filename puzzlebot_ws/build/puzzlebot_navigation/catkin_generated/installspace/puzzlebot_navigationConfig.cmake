@@ -67,14 +67,14 @@ set(puzzlebot_navigation_CONFIG_INCLUDED TRUE)
 
 # set variables for source/devel/install prefixes
 if("FALSE" STREQUAL "TRUE")
-  set(puzzlebot_navigation_SOURCE_PREFIX /home/puzzlebot/puzzlebot_ws/src/puzzlebot_navigation)
-  set(puzzlebot_navigation_DEVEL_PREFIX /home/puzzlebot/puzzlebot_ws/devel)
+  set(puzzlebot_navigation_SOURCE_PREFIX /home/lftronic/Documents/code/ROS/puzzlebot_workspace_backup/puzzlebot_ws/src/puzzlebot_navigation)
+  set(puzzlebot_navigation_DEVEL_PREFIX /home/lftronic/Documents/code/ROS/puzzlebot_workspace_backup/puzzlebot_ws/devel)
   set(puzzlebot_navigation_INSTALL_PREFIX "")
   set(puzzlebot_navigation_PREFIX ${puzzlebot_navigation_DEVEL_PREFIX})
 else()
   set(puzzlebot_navigation_SOURCE_PREFIX "")
   set(puzzlebot_navigation_DEVEL_PREFIX "")
-  set(puzzlebot_navigation_INSTALL_PREFIX /home/puzzlebot/puzzlebot_ws/install)
+  set(puzzlebot_navigation_INSTALL_PREFIX /home/lftronic/Documents/code/ROS/puzzlebot_workspace_backup/puzzlebot_ws/install)
   set(puzzlebot_navigation_PREFIX ${puzzlebot_navigation_INSTALL_PREFIX})
 endif()
 
@@ -154,7 +154,7 @@ foreach(library ${libraries})
     set(lib_path "")
     set(lib "${library}-NOTFOUND")
     # since the path where the library is found is returned we have to iterate over the paths manually
-    foreach(path /home/puzzlebot/puzzlebot_ws/install/lib;/home/puzzlebot/puzzlebot_ws/devel/lib;/home/puzzlebot/catkin_ws/devel/lib;/opt/ros/melodic/lib)
+    foreach(path /home/lftronic/Documents/code/ROS/puzzlebot_workspace_backup/puzzlebot_ws/install/lib;/home/lftronic/Documents/code/ROS/puzzlebot_workspace_backup/puzzlebot_ws/devel/lib;/opt/ros/melodic/lib)
       find_library(lib ${library}
         PATHS ${path}
         NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
