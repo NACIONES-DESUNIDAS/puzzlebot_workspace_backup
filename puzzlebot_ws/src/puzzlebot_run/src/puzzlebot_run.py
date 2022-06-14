@@ -18,6 +18,8 @@ CMD_VEL = '/cmd_vel'
 CMD_VEL_GO_2_GOAL = '/cmd_vel/go_2_goal'
 CMD_VEL_LINE_DETECT = '/cmd_vel/line_detect'
 
+RATE = 30
+
 class Controller():
     def __init__(self):
         self.pose2d = Pose2D()
@@ -26,6 +28,7 @@ class Controller():
         self.pose2d.theta = 0.0
 
         rospy.init_node('puzzlebot_run')
+        rospy.Rate(RATE)
 
         ##################
 
@@ -133,8 +136,10 @@ class Controller():
                     success = True
                     action = False
 
-            cmd_vel.linear.x = self.line_detect.linear.x
-            cmd_vel.angular.z = self.line_detect.angular.z
+        cmd_vel.linear.x = self.line_detect.linear.x
+        cmd_vel.angular.z = self.line_detect.angular.z
+
+        self.cmd_vel_pub.publish(cmd_vel)
 
     def go_2_goal_callback(self, msg):
         self.go_2_goal = msg

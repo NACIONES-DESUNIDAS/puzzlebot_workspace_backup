@@ -11,10 +11,10 @@ from puzzlebot_msgs.msg import GoToPoseAction, GoToPoseFeedback, GoToPoseResult
 RATE   =  10
 
 linealVel = 0.1
-kp = 0.001
-kd = 0.0005
+kp = 0.00075
+kd = 0.000075
 
-TIME_THRESHOLD = 3.5
+TIME_THRESHOLD = 4.5
 
 THETA_THRESHOLD = 10.0 * pi / 180.0
 DIST_THRESHOLD = 0.1
@@ -22,7 +22,8 @@ DIST_THRESHOLD = 0.1
 COUNTER_THRESHOLD = 4
 
 CMD_VEL_GO_2_GOAL = "/cmd_vel/go_2_goal"
-CMD_VEL_LINE_DETECT = "/cmd_vel/line_detect"
+CMD_VEL_LINE_DETECT = "/cmd_vel"
+# "/cmd_vel/line_detect"
 
 class Navigator():
     def __init__(self):
@@ -141,7 +142,7 @@ class Navigator():
                 cmd_vel.angular.z = 0
         else:
             self.angularTimeTolerance = 0
-            cmd_vel.angular.z = factor * controlAngularSpeed if controlAngularSpeed <= 0.1 and controlAngularSpeed >= -0.1 else 0.1 * factor
+            cmd_vel.angular.z = factor * controlAngularSpeed if controlAngularSpeed <= 0.1 else 0.1 * factor
             cmd_vel.linear.x = 0.1
 
         self.cmd_vel_line_detect_pub.publish(cmd_vel)
