@@ -43,8 +43,8 @@ class Controller():
 
         ##################
 
-        self.cmd_vel_go_2_goal_pub = rospy.Subscriber(CMD_VEL_GO_2_GOAL,Twist,self.go_2_goal_callback)
-        self.cmd_vel_line_detect_pub = rospy.Subscriber(CMD_VEL_LINE_DETECT,Twist,self.line_detect_callback)
+        self.cmd_vel_go_2_goal = rospy.Subscriber(CMD_VEL_GO_2_GOAL,Twist,self.go_2_goal_callback)
+        self.cmd_vel_line_detect = rospy.Subscriber(CMD_VEL_LINE_DETECT,Twist,self.line_detect_callback)
 
         self.go_2_goal = Twist()
         self.line_detect = Twist()
@@ -97,9 +97,12 @@ class Controller():
 
         ##################
 
-        STATE = 0
+        if self.sigLabel == "up_signal":
+            STATE = 0
+        elif self.sigLabel == "right_signal":
+            STATE = 1
 
-        action = self.interFlag
+        action = False
         success = False
         if action and not success:
             if STATE == 0:
@@ -129,6 +132,9 @@ class Controller():
                 else:
                     success = True
                     action = False
+
+            cmd_vel.linear.x = self.line_detect.linear.x
+            cmd_vel.angular.z = self.line_detect.angular.z
 
     def go_2_goal_callback(self, msg):
         self.go_2_goal = msg
