@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from cmath import rect
 import cv2
 from cv2 import cvtColor
 import numpy as np
@@ -86,15 +87,6 @@ class TrafficLightsDetector:
         # Define the ROS node execution rate
         self.rate = rospy.Rate(pub_rate)
 
-        self.ranges = {"red":(np.array(UPPER_RED),np.array(LOWER_RED)),"green":(np.array(UPPER_GREEN),np.array(LOWER_GREEN))}        
-        
-        self.kernel = np.ones((5,5), np.uint8) # np.array(MATT,dtype=np.uint8)
-
-
-    def sliceImage(self,img):
-        return img[:int(img.shape[1]*0.6),:,:]
-
-
     def preprocessImage(self, img):
         # Method used to preprocess the node input image, the image processing must be divided in:
         # 1 - Resize the input image to a specified image scale factor.
@@ -107,20 +99,17 @@ class TrafficLightsDetector:
         ##########################################################################################################
 
         # Your code here...
-        width = int(img.shape[0]*self.img_scale_factor/100)
-        height = int(img.shape[1]*self.img_scale_factor/100)
-
-
-        img = cv2.resize(img,(height,width))
-        img = cv2.rotate(img,cv2.ROTATE_180)
-        img =  img[:175,:,:]
-        img =cv2.GaussianBlur(img,(7,7),0)
+        height =  int(float(img.shape[0]) * (float(self.img_scale_factor)/100.00))
+        width = int(float(img.shape[1]) * (float(self.img_scale_factor)/100.00))
+        size = (width, height)
+        img = cv2.resize(img, size)
+        #img = cv2.rotate(img, cv2.ROTATE_180)
+        img = cv2.GaussianBlur(img, (3, 3), 0)
 
         ##########################################################################################################
-        
         return img
 
-    def extractRedPixels(self, img):
+    def extractPixels(self, img):
         # Method used to extract the red pixels from an image, the image processing must be divided in:
         # 1 - Convert the image to the HSV color space.
         # 2 - Define adequate HSV threshold values for the color filtering.
@@ -133,106 +122,78 @@ class TrafficLightsDetector:
         ##########################################################################################################
 
         # Your code here...
-        upperRed = np.array([15,255,255])
-        lowerRed = np.array([0,88,88])
-
-        upperRed2 = np.array([180,255,255])
-        lowerRed2 = np.array([170,88,88])
-
-        hsv = cv2.cvtColor(img.copy(),cv2.COLOR_BGR2HSV)
-
-
-        filtered = cv2.inRange(hsv,lowerb=lowerRed,upperb=upperRed)
-        filtered2 = cv2.inRange(hsv,lowerb=lowerRed2,upperb=upperRed2)
-
-        masked = cv2.bitwise_and(img,img,mask=filtered+filtered2)
-
-
+        #Divide image by GREEN and RED channels, in addition to applying threshold from 220 to 255...
+        #channel.
+        img_b, img_green, img_red = cv2.split(img)
+        th, redPixels = cv2.threshold(img_red, 220, 255, 0)
+        th, greenPixels = cv2.threshold(img_green, 220, 255, 0)
         ##########################################################################################################
         
-        return masked
+        #Returning mask for each color.
+        return redPixels, greenPixels
 
-    def extractGreenPixels(self, img):
-        # Method used to extract the green pixels from an image, the image processing must be divided in:
-        # 1 - Convert the image to the HSV color space.
-        # 2 - Define adequate HSV threshold values for the color filtering.
-        # 3 - Use the required OpenCV function to obtain image mask required to filter the pixels based on the defined color threshold values.
-        # 3 - Use the required OpenCV function to apply the obtained masks to the image.
-        # 4 - Return the final processed image
+    def contours(self, img, mask):
+        #Find contours to generate a list to do the BoundingRect
+        cnt, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        rect = []
+        e = 5
+        for c in cnt:
+            x, y, w, h = cv2.boundingRect(c)
+            if(w>0) and (h>0):
+                cv2.rectangle(img, (x, y), (x+w, y+h), (255,0, 0), 2)
+                rect.append(img[y:y+h, x:x+w])
         
-        ##########################################################################################################
-        # TODO: Complete the class method definition using the previous description
-        ##########################################################################################################
         
-        # Your code here...
-        upperRed = np.array([65,255,255])
-        lowerRed = np.array([45,180,88])        
-        hsv = cv2.cvtColor(img.copy(),cv2.COLOR_BGR2HSV)
-        filtered = cv2.inRange(hsv,lowerb=lowerRed,upperb=upperRed)
-        masked = cv2.bitwise_and(img,img,mask=filtered)
+        return rect, img
 
+    #CHANEL-->
+    # RED-->1
+    #GREEN-->2
+    def detectPixels(self, rect, channel):
+        counterRED = 0
+        counterGREEN = 0
+        if len(rect) > 0:
 
-        ##########################################################################################################
-        
-        return masked
+            if(channel == 1):
+                for c in rect:
+                    
+                    c = cv2.cvtColor(c, cv2.COLOR_BGR2HSV)
+                    # H, S, V
+                    red_min1 = np.array([0, 70, 110]) 
+                    red_max1 = np.array([15, 255, 255])
 
-    def binarizeImage(self, masked,erotionIters=5,dilationIters = 5):
-        # Method used to binarize a colored input image, the image processing must be divided in:
-        # 1 - Convert the image to a grayscale color space.
-        # 2 - Use the requierd OpenCV function to binarize the image selecting an adequate theshold value.
-        # 3 - Use the required OpenCV functions and kernels, to erode or dilate the binarized image and reduce non desired or noisy image components.
-        # 4 - Return the final processed image
+                    red_min2 = np.array([170, 70, 110]) 
+                    red_max2 = np.array([180, 255, 255])
 
-        ##########################################################################################################
-        # TODO: Complete the class method definition using the previous description
-        ##########################################################################################################
+                    mask1 = cv2.inRange(c, red_min1, red_max1)
+                    mask2 = cv2.inRange(c, red_min2, red_max2)
+                    mask = mask1 + mask2
+                    counterRED+=np.count_nonzero(mask)
+                rospy.loginfo(counterRED)
+                
+                #Flags in Boolean
+                if(counterRED > 0):
+                    self.found_red = True
+                else:
+                    self.found_red = False
 
-        # Your code here...
-        gray = cv2.cvtColor(masked,cv2.COLOR_BGR2GRAY)
-        threshold,thresh = cv2.threshold(gray,0,255,cv2.THRESH_BINARY_INV+cv2.THRESH_OTSU)
-        erotion = cv2.erode(src=thresh,kernel=self.kernel ,iterations=erotionIters)
-        dilation = cv2.dilate(src=erotion,kernel=self.kernel ,iterations=dilationIters)
+            
+            
+            elif(channel == 2):
+                for c in rect:
+                    c = cv2.cvtColor(c, cv2.COLOR_BGR2HSV)
+                    green_min = np.array([30, 70, 80]) # H, S, V
+                    green_max = np.array([80, 255, 255])
 
-        ##########################################################################################################
-        
-        return dilation
+                    mask = cv2.inRange(c, green_min, green_max)
+                    counterGREEN+=np.count_nonzero(mask)
+                rospy.loginfo(counterGREEN)
+            #Flags in Boolean
+            if(counterGREEN > 0):
+                self.found_green = True
+            else:
+                self.found_green = False
 
-    def extractBlobs(self, img, color):
-        # Method used to extract blobs form a binarized input image, the image processing must be divided in:
-        # 1 - Use the requierd OpenCV function to instantiate a Blob Detector Parameters object.
-        # 2 - Modify the minimum blob area an circularity parameters to better detect the desired blobs
-        # 3 - Use the requierd OpenCV function to create a Blob Detector passing the defined Parameters object.
-        # 4 - Extract the image blob keypoints using the detector.
-        # 5 - Create a full black image with the same shape as your input image.
-        # 6 - Draw the extracted blob keypoints on the black image, the keypoints must be drawn with the color specified by the method's color argument input.
-        # 7 - Assing a boolean value to the 'found' variable, marking wheter an adequate blob was detected on the image or not.
-        # 8 - Return both the boolean value and the image with the blob keypoints drawn.
-
-        found = False
-
-        ##########################################################################################################
-        # TODO: Complete the class method definition using the previous description
-        ##########################################################################################################
-
-        # Your code here...
-        params = cv2.SimpleBlobDetector_Params()
-        
-        params.filterByCircularity = True
-        params.minCircularity = 0.6
-        params.filterByArea = True
-        params.minArea = 50
-        params.maxArea = 5000
-        
-        detector = cv2.SimpleBlobDetector_create(params)
-        keypoints = detector.detect(img)
-        m = np.zeros(img.shape,dtype = np.uint8)
-        black = cv2.merge([m,m,m])
-        blobs = cv2.drawKeypoints(black,keypoints,np.array([]),color,cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-        found = False if len(keypoints)  == 0 else True
-
-        ##########################################################################################################
-        
-        return found, blobs
 
     def run(self):
         # Main loop
@@ -244,40 +205,36 @@ class TrafficLightsDetector:
             src_frame = self.image
 
             preprocessed_image = self.preprocessImage(src_frame)
-        
-            red_pixel_image = self.extractRedPixels(preprocessed_image)
-            green_pixel_image = self.extractGreenPixels(preprocessed_image)
+            red_pixel_image, green_pixel_image = self.extractPixels(preprocessed_image)
+            rectRED, contoursRED = self.contours(preprocessed_image, red_pixel_image)
+            rectGREEN, contoursGREEN = self.contours(preprocessed_image, green_pixel_image)
+            self.detectPixels(rectRED, 1)
+            self.detectPixels(rectGREEN, 2)
 
-            red_pixel_binarized_image = self.binarizeImage(red_pixel_image,dilationIters=1,erotionIters=1)
-            green_pixel_binarized_image = self.binarizeImage(green_pixel_image)
 
-
-            red_pixel_blob_found, red_pixel_blob_detection = self.extractBlobs(red_pixel_binarized_image, (0, 0, 255))
-            green_pixel_blob_found, green_pixel_blob_detection = self.extractBlobs(green_pixel_binarized_image, (0, 255, 0))
-
-            filtered_image = red_pixel_blob_detection | green_pixel_blob_detection
 
             ##########################################################################################################
             # TODO: Use the adequate cv_bridge method and class attribute to convert the filtered image from OpenCV format to ROS Image message format
             ##########################################################################################################
 
-            output = self.bridge.cv2_to_imgmsg(filtered_image,encoding="bgr8")
-            output2 = self.bridge.cv2_to_imgmsg(red_pixel_binarized_image)
-            output3 = self.bridge.cv2_to_imgmsg(green_pixel_binarized_image)
-            output4 = self.bridge.cv2_to_imgmsg(preprocessed_image,encoding="bgr8")
+            output = self.bridge.cv2_to_imgmsg(contoursRED, encoding="bgr8")
+            output2 = self.bridge.cv2_to_imgmsg(green_pixel_image)
+            output3 = self.bridge.cv2_to_imgmsg(contoursGREEN, encoding="bgr8")
+            output4 = self.bridge.cv2_to_imgmsg(red_pixel_image)
             
             ##########################################################################################################
-
-            self.image_pub.publish(output)
-
-            self.red_image_pub.publish(output2)
+            ############################################FLASGSSSSSSSS########################
+            self.red_light_detected_pub.publish(self.found_red)
+            self.green_light_detected_pub.publish(self.found_green)
+            ########################################################################################
+            self.red_image_pub.publish(output)
             self.green_image_pub.publish(output3)
 
-            self.preprocessed_image_pub.publish(output4)
 
-            self.red_light_detected_pub.publish(red_pixel_blob_found)
+            #ME FALTARON LOS OUTPUTS Tanto del green_pixel_image & red_pixel_image
+            #self.preprocessed_image_pub.publish(output2)
 
-            self.green_light_detected_pub.publish(green_pixel_blob_found)
+          
 
             self.image = None
 
