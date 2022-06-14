@@ -166,4 +166,4 @@ if __name__ == '__main__':
     
     try:
         traffic_signal_detector.run()
-    except rospy.ROSInterrupt
+    except rospy.ROSInterruptException
