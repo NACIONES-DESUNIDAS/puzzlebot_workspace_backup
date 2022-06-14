@@ -9,12 +9,14 @@ from puzzlebot_msgs.msg import GoToPoseAction, GoToPoseGoal, GoToPoseFeedback, G
 ROS_RED_LIGHT_DETECT_TOPIC = '/puzzlebot_vision/traffic_lights/red_light'
 ROS_GREEN_LIGHT_DETECT_TOPIC = '/puzzlebot_vision/traffic_lights/green_light'
 
-ROS_SIGNAL_DETECT_TOPIC = '/puzzlebot_vision/traffic_signals/signal_found'
 ROS_SIGNAL_LABEL_TOPIC = '/puzzlebot_vision/traffic_signals/prediction'
+ROS_SIGNAL_DETECT_TOPIC = '/puzzlebot_vision/traffic_signals/signal_found'
 
-CMD_VEL = "/cmd_vel"
-CMD_VEL_GO_2_GOAL = "/cmd_vel/go_2_goal"
-CMD_VEL_LINE_DETECT = "/cmd_vel/line_detect"
+ROS_INTERSECTION_TOPIC = '/puzzlebot_vision/intersection'
+
+CMD_VEL = '/cmd_vel'
+CMD_VEL_GO_2_GOAL = '/cmd_vel/go_2_goal'
+CMD_VEL_LINE_DETECT = '/cmd_vel/line_detect'
 
 class Controller():
     def __init__(self):
@@ -38,8 +40,14 @@ class Controller():
         ##################
 
         self.poseSub = rospy.Subscriber("/pose2d",Pose2D,self.poseCallback)
-        self.cmd_vel_go_2_goal_pub = rospy.Publisher(CMD_VEL_GO_2_GOAL,Twist,self.go_2_goal_callback)
-        self.cmd_vel_line_detect_pub = rospy.Publisher(CMD_VEL_LINE_DETECT,Twist,self.line_detect_callback)
+
+        ##################
+
+        self.cmd_vel_go_2_goal_pub = rospy.Subscriber(CMD_VEL_GO_2_GOAL,Twist,self.go_2_goal_callback)
+        self.cmd_vel_line_detect_pub = rospy.Subscriber(CMD_VEL_LINE_DETECT,Twist,self.line_detect_callback)
+
+        self.go_2_goal = Twist()
+        self.line_detect = Twist()
 
         ##################
 
@@ -56,8 +64,22 @@ class Controller():
 
         self.sigFlag = Bool()
         self.sigLabel = String
+
+        ##################
+
+        self.cmd_vel_pub = rospy.Publisher(CMD_VEL, Twist, queue_size=1)
     
     def run(self):
+        cmd_vel = Twist()
+        cmd_vel.linear.x = 0.0
+        cmd_vel.linear.y = 0.0
+        cmd_vel.linear.z = 0.0
+        cmd_vel.angular.x = 0.0
+        cmd_vel.angular.y = 0.0
+        cmd_vel.angular.z = 0.0
+
+        ##################
+
         goal_pose = Pose2D()
         goal_pose.x = 0.0
         goal_pose.y = 0.0
@@ -67,11 +89,13 @@ class Controller():
         curr_pose.y = self.pose2d.y
         curr_pose.theta = self.pose2d.theta
 
+        ##################
+
         STATE = 0
 
+        action = False
         success = False
-
-        while not success:
+        while not success and action:
             if STATE == 0:
                 goal_pose.x = curr_pose.x + self.dist
                 goal_pose.y = curr_pose.y
@@ -79,7 +103,7 @@ class Controller():
             elif STATE == 1:
                 goal_pose.x = curr_pose.x
                 goal_pose.y = curr_pose.y + (self.dist / 2.0)
-                goal_pose.theta = curr_pose.theta - 90
+                goal_pose.theta = curr_pose.theta - (pi / 2.0)
             else:
                 goal_pose.x = curr_pose.x + (self.dist / 2.0)
                 goal_pose.y = curr_pose.y
@@ -91,10 +115,20 @@ class Controller():
             result = self.client.get_result()
 
             if result.success:
-                if STATE < 2:
+                if STATE == 0:
+                    success = True
+                    action = False
+                elif STATE == 1:
                     STATE += 1
                 else:
-                    STATE = 0
+                    success = True
+                    action = False
+
+    def go_2_goal_callback(self, msg):
+        self.go_2_goal = msg.data
+    
+    def line_detect_callback(self, msg):
+        self.line_detect = msg.data
 
     def redLightFlag_callback(self, msg):
         self.redFlag = msg.data
@@ -104,8 +138,16 @@ class Controller():
         self.greenFlag = msg.data
         rospy.loginfo("Green: %s",self.greenFlag)
 
-    def poseCallback(self, data):
-        self.pose2d = data
+    def signalFlag_callback(self, msg):
+        self.sigFlag = msg.data
+        rospy.loginfo("Signal: %s",self.sigFlag)
+
+    def signalLabel_callback(self, msg):
+        self.sigLabel = msg.data
+        rospy.loginfo("Label: %s", self.sigLabel)
+
+    def poseCallback(self, msg):
+        self.pose2d = msg
 
     def callback_active(self):
         rospy.loginfo("Action server is processing the goal")
