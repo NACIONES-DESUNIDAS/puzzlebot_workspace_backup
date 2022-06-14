@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import cv2
 import numpy as np
-from puzzlebot_ws.src.puzzlebot_vision.src.puzzlebot_traffic_signals import IMG_SCALE_FACTOR
 import rospy, cv_bridge
 from sensor_msgs.msg import Image
 from std_msgs.msg import Bool
@@ -58,7 +57,6 @@ class IntersectionDetector():
 
     def imageCallback(self, msg):
         self.image = self.bridge.imgmsg_to_cv2(msg, desired_encoding = 'bgr8')	
-        self.run()
 
 
     def imagePreprocessing(self,img):
@@ -131,40 +129,41 @@ class IntersectionDetector():
             
 
     def run(self):
-        """
-        if self.image is None:
-            self.rate.sleep()
-            continue
-        """
-        frame = self.image
+        while not rospy.is_shutdown():
+  
+            if self.image is None:
+                self.rate.sleep()
+                continue
+            
+            frame = self.image
 
-        # escalar y rotar a 180 grados
-        gray,frameP = self.imagePreprocessing(frame)
+            # escalar y rotar a 180 grados
+            gray,frameP = self.imagePreprocessing(frame)
 
-        # area de interes
-        slicedGray = self.sliceImage(gray)
-        oriSliced = self.sliceImage(frameP)
+            # area de interes
+            slicedGray = self.sliceImage(gray)
+            oriSliced = self.sliceImage(frameP)
 
-        # aplicar threshold 
-        threshold = self.thresholdImg(slicedGray)
-        # obtnener contornos
-        edges = self.edgeDetection(threshold)
-        
-        contourImage = cv2.drawContours(oriSliced,edges,-1,(0,0,255),2)
+            # aplicar threshold 
+            threshold = self.thresholdImg(slicedGray)
+            # obtnener contornos
+            edges = self.edgeDetection(threshold)
+            
+            contourImage = cv2.drawContours(oriSliced,edges,-1,(0,0,255),2)
 
-        flag = True if len(edges) > self.threshold else False
+            flag = True if len(edges) > self.threshold else False
 
-        self.detectedFlagPub.publish(flag)
+            self.detectedFlagPub.publish(flag)
 
-        debug = self.bridge.cv2_to_imgmsg(contourImage,encoding="bgr8")
-        self.imageDebugPub.publish(debug)
+            debug = self.bridge.cv2_to_imgmsg(contourImage,encoding="bgr8")
+            self.imageDebugPub.publish(debug)
 
 
 if __name__ == '__main__':
     intersectionDetector = IntersectionDetector()
-    """
+    
     try:
         intersectionDetector.run()
     except rospy.ROSInterruptException:
         pass
-    """
+    
