@@ -197,48 +197,51 @@ class TrafficLightsDetector:
 
     def run(self):
         # Main loop
+        """
         while not rospy.is_shutdown():
             if self.image is None: 
                 self.rate.sleep()
                 continue
-
-            src_frame = self.image
-
-            preprocessed_image = self.preprocessImage(src_frame)
-            red_pixel_image, green_pixel_image = self.extractPixels(preprocessed_image)
-            rectRED, contoursRED = self.contours(preprocessed_image, red_pixel_image)
-            rectGREEN, contoursGREEN = self.contours(preprocessed_image, green_pixel_image)
-            self.detectPixels(rectRED, 1)
-            self.detectPixels(rectGREEN, 2)
+        """
 
 
+        src_frame = self.image
 
-            ##########################################################################################################
-            # TODO: Use the adequate cv_bridge method and class attribute to convert the filtered image from OpenCV format to ROS Image message format
-            ##########################################################################################################
-
-            output = self.bridge.cv2_to_imgmsg(contoursRED, encoding="bgr8")
-            output2 = self.bridge.cv2_to_imgmsg(green_pixel_image)
-            output3 = self.bridge.cv2_to_imgmsg(contoursGREEN, encoding="bgr8")
-            output4 = self.bridge.cv2_to_imgmsg(red_pixel_image)
-            
-            ##########################################################################################################
-            ############################################FLASGSSSSSSSS########################
-            self.red_light_detected_pub.publish(self.found_red)
-            self.green_light_detected_pub.publish(self.found_green)
-            ########################################################################################
-            self.red_image_pub.publish(output)
-            self.green_image_pub.publish(output3)
+        preprocessed_image = self.preprocessImage(src_frame)
+        red_pixel_image, green_pixel_image = self.extractPixels(preprocessed_image)
+        rectRED, contoursRED = self.contours(preprocessed_image, red_pixel_image)
+        rectGREEN, contoursGREEN = self.contours(preprocessed_image, green_pixel_image)
+        self.detectPixels(rectRED, 1)
+        self.detectPixels(rectGREEN, 2)
 
 
-            #ME FALTARON LOS OUTPUTS Tanto del green_pixel_image & red_pixel_image
-            #self.preprocessed_image_pub.publish(output2)
 
-          
+        ##########################################################################################################
+        # TODO: Use the adequate cv_bridge method and class attribute to convert the filtered image from OpenCV format to ROS Image message format
+        ##########################################################################################################
 
-            self.image = None
+        output = self.bridge.cv2_to_imgmsg(contoursRED, encoding="bgr8")
+        output2 = self.bridge.cv2_to_imgmsg(green_pixel_image)
+        output3 = self.bridge.cv2_to_imgmsg(contoursGREEN, encoding="bgr8")
+        output4 = self.bridge.cv2_to_imgmsg(red_pixel_image)
+        
+        ##########################################################################################################
+        ############################################FLASGSSSSSSSS########################
+        self.red_light_detected_pub.publish(self.found_red)
+        self.green_light_detected_pub.publish(self.found_green)
+        ########################################################################################
+        self.red_image_pub.publish(output)
+        self.green_image_pub.publish(output3)
 
-            self.rate.sleep()
+
+        #ME FALTARON LOS OUTPUTS Tanto del green_pixel_image & red_pixel_image
+        #self.preprocessed_image_pub.publish(output2)
+
+        
+
+        self.image = None
+
+        self.rate.sleep()
 
     def image_callback(self, msg):
         # Subscriber callback function used to store the camera extracted images
@@ -248,13 +251,16 @@ class TrafficLightsDetector:
         ##########################################################################################################
 
         self.image = self.bridge.imgmsg_to_cv2(msg,desired_encoding="bgr8")
+        self.run()
 
         ##########################################################################################################
         
 
 if __name__ == '__main__':
     traffic_lights_detector = TrafficLightsDetector()
+    """
     try:
         traffic_lights_detector.run()
     except rospy.ROSInterruptException:
         pass
+    """
