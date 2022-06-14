@@ -67,6 +67,12 @@ class Controller():
 
         ##################
 
+        self.intersectionFlag = rospy.Subscriber(ROS_INTERSECTION_TOPIC, Bool, self.intersection_callback)
+
+        self.interFlag = Bool()
+
+        ##################
+
         self.cmd_vel_pub = rospy.Publisher(CMD_VEL, Twist, queue_size=1)
     
     def run(self):
@@ -93,9 +99,9 @@ class Controller():
 
         STATE = 0
 
-        action = False
+        action = self.interFlag
         success = False
-        while not success and action:
+        if action and not success:
             if STATE == 0:
                 goal_pose.x = curr_pose.x + self.dist
                 goal_pose.y = curr_pose.y
@@ -125,10 +131,10 @@ class Controller():
                     action = False
 
     def go_2_goal_callback(self, msg):
-        self.go_2_goal = msg.data
+        self.go_2_goal = msg
     
     def line_detect_callback(self, msg):
-        self.line_detect = msg.data
+        self.line_detect = msg
 
     def redLightFlag_callback(self, msg):
         self.redFlag = msg.data
@@ -146,6 +152,10 @@ class Controller():
         self.sigLabel = msg.data
         rospy.loginfo("Label: %s", self.sigLabel)
 
+    def intersection_callback(self, msg):
+        self.interFlag = msg.data
+        rospy.loginfo("Intersection: %s", self.interFlag)
+
     def poseCallback(self, msg):
         self.pose2d = msg
 
@@ -158,7 +168,8 @@ class Controller():
 if __name__ == '__main__':
     try:
         controller = Controller()
-        controller.run()
+        while True:
+            controller.run()
     except rospy.ROSInterruptException:
         pass
 
