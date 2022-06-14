@@ -137,14 +137,15 @@ class TrafficLightsDetector:
         cnt, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         rect = []
         e = 5
+        imagec=img.copy()
         for c in cnt:
             x, y, w, h = cv2.boundingRect(c)
             if(w>0) and (h>0):
-                cv2.rectangle(img, (x, y), (x+w, y+h), (255,0, 0), 2)
+                cv2.rectangle(imagec, (x, y), (x+w, y+h), (255,0, 0), 2)
                 rect.append(img[y:y+h, x:x+w])
         
         
-        return rect, img
+        return rect, imagec
 
     #CHANEL-->
     # RED-->1
@@ -169,10 +170,10 @@ class TrafficLightsDetector:
                     mask2 = cv2.inRange(c, red_min2, red_max2)
                     mask = mask1 + mask2
                     counterRED+=np.count_nonzero(mask)
-                #rospy.loginfo(counterRED)
+                rospy.loginfo(counterRED)
                 
                 #Flags in Boolean
-                if(counterRED > 0):
+                if(counterRED > 3):
                     self.found_red = True
                 else:
                     self.found_red = False
@@ -184,15 +185,17 @@ class TrafficLightsDetector:
                     c = cv2.cvtColor(c, cv2.COLOR_BGR2HSV)
                     green_min = np.array([30, 70, 80]) # H, S, V
                     green_max = np.array([80, 255, 255])
+                    #green_min = np.array([45, 180, 88]) # H, S, V
+                    #green_max = np.array([65, 255, 255])
 
                     mask = cv2.inRange(c, green_min, green_max)
                     counterGREEN+=np.count_nonzero(mask)
-                rospy.loginfo(counterGREEN)
-            #Flags in Boolean
-            if(counterGREEN > 0):
-                self.found_green = True
-            else:
-                self.found_green = False
+                #rospy.loginfo(counterGREEN)
+                 #Flags in Boolean
+                if(counterGREEN < 30):
+                    self.found_green = True
+                else:
+                    self.found_green = False
 
 
     def run(self):
