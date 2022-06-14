@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import cv2
 from cv2 import cvtColor
 import numpy as np
@@ -86,8 +88,8 @@ class Signal_Identifier:
     # COnverts to grayscale, scales the image to reduce processing time and rotates
     def preprocessImage(self,img):
 
-        width = int(img.shape[0]*self.imageScaleFactor/100)
-        height = int(img.shape[1]*self.imageScaleFactor/100)
+        width = int(img.shape[0]*self.img_scale_factor/100)
+        height = int(img.shape[1]*self.img_scale_factor/100)
         img = cv2.resize(img,(height,width))
         img = cv2.rotate(img,cv2.ROTATE_180)
 
@@ -138,33 +140,30 @@ class Signal_Identifier:
 
 
     def run(self):
-        """
+        
         while not rospy.is_shutdown():
             if self.image is None: 
                 self.rate.sleep()
                 continue
-        """
-        frame = self.image
+        
+            frame = self.image
 
-        img = self.preprocessImage(frame)
+            img = self.preprocessImage(frame)
 
-        circles = self.getHoughCircles(img)
+            circles = self.getHoughCircles(img)
 
 
-        self.pubSegementedImages(circles,img)
-        #self.rate.sleep()
+            self.pubSegementedImages(circles,img)
+            #self.rate.sleep()
 
 
     def image_callback(self, msg):
         self.image = self.bridge.imgmsg_to_cv2(msg,desired_encoding="bgr8")
-        self.run()
 
 
 if __name__ == '__main__':
     traffic_signal_detector = Signal_Identifier()
-    """
+    
     try:
         traffic_signal_detector.run()
-    except rospy.ROSInterruptException:
-        pass
-    """
+    except rospy.ROSInterrupt
