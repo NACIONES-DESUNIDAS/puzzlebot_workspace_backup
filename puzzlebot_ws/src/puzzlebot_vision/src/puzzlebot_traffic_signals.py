@@ -138,29 +138,33 @@ class Signal_Identifier:
 
 
     def run(self):
+        """
         while not rospy.is_shutdown():
             if self.image is None: 
                 self.rate.sleep()
                 continue
+        """
+        frame = self.image
 
-            frame = self.image
+        img = self.preprocessImage(frame)
 
-            img = self.preprocessImage(frame)
-
-            circles = self.getHoughCircles(img)
+        circles = self.getHoughCircles(img)
 
 
-            self.pubSegementedImages(circles,img)
-            #self.rate.sleep()
+        self.pubSegementedImages(circles,img)
+        #self.rate.sleep()
 
 
     def image_callback(self, msg):
         self.image = self.bridge.imgmsg_to_cv2(msg,desired_encoding="bgr8")
+        self.run()
 
 
 if __name__ == '__main__':
     traffic_signal_detector = Signal_Identifier()
+    """
     try:
         traffic_signal_detector.run()
     except rospy.ROSInterruptException:
         pass
+    """
