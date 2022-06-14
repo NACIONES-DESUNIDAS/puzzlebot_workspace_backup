@@ -20,6 +20,8 @@ CMD_VEL_LINE_DETECT = '/cmd_vel/line_detect'
 
 RATE = 30
 
+SIGNAL_THRESHOLD = 3
+
 class Controller():
     def __init__(self):
         self.pose2d = Pose2D()
@@ -65,6 +67,7 @@ class Controller():
         self.signalFlag = rospy.Subscriber(ROS_SIGNAL_DETECT_TOPIC, Bool, self.signalFlag_callback)
         self.signalLabel = rospy.Subscriber(ROS_SIGNAL_LABEL_TOPIC, String, self.signalLabel_callback)
 
+        self.sigArray = ["no_signal", "no_signal", "no_signal"]
         self.sigFlag = Bool()
         self.sigLabel = String
 
@@ -157,6 +160,8 @@ class Controller():
 
     def signalFlag_callback(self, msg):
         self.sigFlag = msg.data
+        self.sigArray.pop(0)
+        self.sigArray.append(msg.data)
         rospy.loginfo("Signal: %s",self.sigFlag)
 
     def signalLabel_callback(self, msg):
@@ -179,7 +184,7 @@ class Controller():
 if __name__ == '__main__':
     try:
         controller = Controller()
-        while True:
+        while not rospy.is_shutdown():
             controller.run()
     except rospy.ROSInterruptException:
         pass
