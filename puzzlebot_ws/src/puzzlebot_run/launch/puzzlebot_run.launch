@@ -1,5 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <launch>
-
+    <!-- Load the parameters defined in the puzzlebot_vision configuration file to the parameter server -->
+    <rosparam command="load" file="$(find puzzlebot_vision)/config/puzzlebot_vision.yaml"/> 
+    <!-- Initialize the Puzzle-Bot camera node using the adequate launch file -->
+    <include file="$(find ros_deep_learning)/launch/video_source.ros1.launch"/>
+    
     <node pkg="puzzlebot_vision" type="puzzlebot_intersection.py" name="intersection_detection"/>
     <node pkg="puzzlebot_vision" type="puzzlebot_line_detection.py" name="line_detection"/>
     <node pkg="puzzlebot_vision" type="puzzlebot_traffic_lights.py" name="light_detection"/>
