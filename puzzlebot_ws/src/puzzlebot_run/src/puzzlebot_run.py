@@ -18,9 +18,7 @@ CMD_VEL = '/cmd_vel'
 CMD_VEL_GO_2_GOAL = '/cmd_vel/go_2_goal'
 CMD_VEL_LINE_DETECT = '/cmd_vel/line_detect'
 
-RATE = 30
-
-SIGNAL_THRESHOLD = 3
+RATE = 10
 
 class Controller():
     def __init__(self):
@@ -30,7 +28,7 @@ class Controller():
         self.pose2d.theta = 0.0
 
         rospy.init_node('puzzlebot_run')
-        rospy.Rate(RATE)
+        self.rate = rospy.Rate(RATE)
 
         ##################
 
@@ -67,7 +65,6 @@ class Controller():
         self.signalFlag = rospy.Subscriber(ROS_SIGNAL_DETECT_TOPIC, Bool, self.signalFlag_callback)
         self.signalLabel = rospy.Subscriber(ROS_SIGNAL_LABEL_TOPIC, String, self.signalLabel_callback)
 
-        self.sigArray = ["no_signal", "no_signal", "no_signal"]
         self.sigFlag = Bool()
         self.sigLabel = String
 
@@ -142,7 +139,10 @@ class Controller():
         cmd_vel.linear.x = self.line_detect.linear.x
         cmd_vel.angular.z = self.line_detect.angular.z
 
+        rospy.loginfo("z: %s", cmd_vel.angular.z)
+
         self.cmd_vel_pub.publish(cmd_vel)
+        self.rate.sleep()
 
     def go_2_goal_callback(self, msg):
         self.go_2_goal = msg
@@ -160,8 +160,6 @@ class Controller():
 
     def signalFlag_callback(self, msg):
         self.sigFlag = msg.data
-        self.sigArray.pop(0)
-        self.sigArray.append(msg.data)
         rospy.loginfo("Signal: %s",self.sigFlag)
 
     def signalLabel_callback(self, msg):
@@ -184,7 +182,7 @@ class Controller():
 if __name__ == '__main__':
     try:
         controller = Controller()
-        while not rospy.is_shutdown():
+        while True:
             controller.run()
     except rospy.ROSInterruptException:
         pass

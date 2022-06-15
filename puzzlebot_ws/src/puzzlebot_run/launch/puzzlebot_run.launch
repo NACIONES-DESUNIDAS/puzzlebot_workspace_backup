@@ -9,10 +9,9 @@
     <node pkg="puzzlebot_vision" type="puzzlebot_line_detection.py" name="line_detection"/>
     <node pkg="puzzlebot_vision" type="puzzlebot_traffic_lights.py" name="light_detection"/>
     <node pkg="puzzlebot_vision" type="puzzlebot_traffic_signals.py" name="signal_segmentation"/>
-
+    <rosparam command="load" file="$(find puzzlebot_navigation)/config/puzzlebot_navigation.yaml" />
     <node pkg="puzzlebot_navigation" type="puzzlebot_odometry.py" name="robot_odometry" output="screen"/>
     <node pkg="puzzlebot_navigation" type="puzzlebot_edges.py" name="robot_edgeDectection" output="screen"/>
     <node pkg="puzzlebot_navigation" type="puzzlebot_navigation.py" name="robot_navigation" output="screen"/>
-    <rosparam command="load" file="$(find puzzlebot_navigation)/config/puzzlebot_navigation.yaml" />
     <node pkg="puzzlebot_run" type="puzzlebot_run.py" name="run" output="screen"/>
 </launch>
