@@ -27,13 +27,13 @@ model = load_model("/home/lftronic/Documents/code/ROS/puzzlebot_workspace_backup
 ROS_IMAGE_OUTPUT_TOPIC = '/puzzlebot_vision/traffic_signals/image_segmentation'
 # Ros Publisher
 ROS_SIGNAL_DETECT_TOPIC = '/puzzlebot_vision/traffic_signals/signal_found'
-ROS_LABEL_PUBLISHER = "/puzzlebot/traffic_signals/predictions"
+ROS_LABEL_PUBLISHER = "/puzzlebot_vision/traffic_signals/prediction"
 
 # parameter server stuff (quizas algun dia...)
 IMG_SHAPE = (150,150,1)
 IMG_TUPPLE_SHAPE = (150,150)
 dims = 150
-RATE = 30
+RATE = 100
 
 class DetectStop():
 
@@ -50,7 +50,7 @@ class DetectStop():
         # classatributes
         self.lastLabel = None
         self.labelCounter = 0
-        self.labelThreshold = 10
+        self.labelThreshold = 20
 
         rospy.init_node("puzzlebot_predictor_node")
         self.rate = rospy.Rate(RATE)
@@ -100,6 +100,7 @@ class DetectStop():
             self.pubLabelFlag(label=label)
            
             self.image = None
+            self.rate.sleep()
 
 if __name__ == '__main__':
     predictor = DetectStop()

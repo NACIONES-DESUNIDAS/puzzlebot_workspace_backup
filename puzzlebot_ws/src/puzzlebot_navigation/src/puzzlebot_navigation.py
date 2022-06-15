@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 import rospy
 import actionlib
 import numpy as np
@@ -22,9 +21,8 @@ DIST_THRESHOLD = 0.1
 
 COUNTER_THRESHOLD = 4
 
-CMD_VEL_GO_2_GOAL = "/cmd_vel/go_2_goal"
-CMD_VEL_LINE_DETECT = "/cmd_vel"
-# "/cmd_vel/line_detect"
+CMD_VEL_GO_2_GOAL = "/cmd_vel"
+CMD_VEL_LINE_DETECT = "/cmd_vel/line_detect"
 
 class Navigator():
     def __init__(self):
@@ -182,8 +180,8 @@ class Navigator():
             current_time = rospy.get_time()
             dt = current_time - last_time
             last_time = current_time
-            Kp = 0.001
-            Kd = 0.0005
+            Kp = 0.1
+            Kd = 0.05
             theta_obj = atan2(y_goal - y_curr, x_goal - x_curr)
             theta_err = theta_obj - theta_curr
             if theta_err >= pi:

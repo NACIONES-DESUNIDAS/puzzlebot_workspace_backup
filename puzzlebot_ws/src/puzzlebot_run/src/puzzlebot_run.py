@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from distutils import cmd
 import rospy
 import actionlib
 from math import pi
@@ -38,7 +39,11 @@ class Controller():
 
         self.client.wait_for_server()
 
-        self.dist = 0.5
+        self.dist = 0.6
+
+        self.action = False
+        
+        self.STATE = 0
 
         ##################
 
@@ -100,24 +105,33 @@ class Controller():
 
         ##################
 
-        if self.sigLabel == "up_signal":
-            STATE = 0
-        elif self.sigLabel == "right_signal":
-            STATE = 1
+        cmd_vel.linear.x = self.line_detect.linear.x
+        cmd_vel.angular.z = self.line_detect.angular.z
 
-        action = False
+        if self.sigLabel == "aplastame":
+            cmd_vel.linear.x *= 1.5
+        elif self.sigLabel == "stop_signal":
+            cmd_vel.linear.x = 0
+            cmd_vel.angular.z = 0
+
+        if not self.action:
+            if self.sigLabel == "up_signal":
+                self.STATE = 0
+            elif self.sigLabel == "right_signal":
+                self.STATE = 1
+
         success = False
-        if action and not success:
-            if STATE == 0:
+        if self.action and not success and not self.redFlag:
+            if self.STATE == 0:
                 goal_pose.x = curr_pose.x + self.dist
                 goal_pose.y = curr_pose.y
                 goal_pose.theta = curr_pose.theta
-            elif STATE == 1:
+            elif self.STATE == 1:
                 goal_pose.x = curr_pose.x
-                goal_pose.y = curr_pose.y + (self.dist / 2.0)
+                goal_pose.y = curr_pose.y - (self.dist / 2.0) - 0.2
                 goal_pose.theta = curr_pose.theta - (pi / 2.0)
             else:
-                goal_pose.x = curr_pose.x + (self.dist / 2.0)
+                goal_pose.x = curr_pose.x - (self.dist / 2.0)
                 goal_pose.y = curr_pose.y
                 goal_pose.theta = curr_pose.theta
 
@@ -127,19 +141,18 @@ class Controller():
             result = self.client.get_result()
 
             if result.success:
-                if STATE == 0:
+                if self.STATE == 0:
                     success = True
-                    action = False
-                elif STATE == 1:
-                    STATE += 1
+                    self.action = False
+                    self.STATE += 1
+                elif self.STATE == 1:
+                    self.STATE += 1
                 else:
                     success = True
-                    action = False
+                    self.action = False
+                    self.STATE = 0
 
-        cmd_vel.linear.x = self.line_detect.linear.x
-        cmd_vel.angular.z = self.line_detect.angular.z
-
-        rospy.loginfo("z: %s", cmd_vel.angular.z)
+        # rospy.loginfo("z: %s", cmd_vel.angular.z)
 
         self.cmd_vel_pub.publish(cmd_vel)
         self.rate.sleep()
@@ -152,15 +165,15 @@ class Controller():
 
     def redLightFlag_callback(self, msg):
         self.redFlag = msg.data
-        rospy.loginfo("Red: %s",self.redFlag)
+        # rospy.loginfo("Red: %s",self.redFlag)
 
     def greenLightFlag_callback(self, msg):
         self.greenFlag = msg.data
-        rospy.loginfo("Green: %s",self.greenFlag)
+        # rospy.loginfo("Green: %s",self.greenFlag)
 
     def signalFlag_callback(self, msg):
         self.sigFlag = msg.data
-        rospy.loginfo("Signal: %s",self.sigFlag)
+        # rospy.loginfo("Signal: %s",self.sigFlag)
 
     def signalLabel_callback(self, msg):
         self.sigLabel = msg.data
@@ -168,7 +181,9 @@ class Controller():
 
     def intersection_callback(self, msg):
         self.interFlag = msg.data
-        rospy.loginfo("Intersection: %s", self.interFlag)
+        if self.interFlag:
+            self.action = True
+        # rospy.loginfo("Intersection: %s", self.interFlag)
 
     def poseCallback(self, msg):
         self.pose2d = msg
