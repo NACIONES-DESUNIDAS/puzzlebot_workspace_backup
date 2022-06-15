@@ -96,6 +96,8 @@ class DetectStop():
             prediction = model.predict(img)
             index = np.argmax(prediction)
             label = self.getCalssName(index)
+            proba = prediction[index]
+            label = "not_found" if proba > 0.95 else label
             self.labelPub.publish(label)
             self.pubLabelFlag(label=label)
            

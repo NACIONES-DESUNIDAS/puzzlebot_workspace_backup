@@ -99,8 +99,8 @@ class Signal_Identifier:
     # receibes image and gets a list of potential traffic signals
     def getHoughCircles(self,img):
         gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-
-        circles_img = cv2.HoughCircles(gray,cv2.HOUGH_GRADIENT,1,100,param1=50,param2=30,minRadius=15,maxRadius=30)
+        gray = cv2.GaussianBlur(gray,(7,7),0)
+        circles_img = cv2.HoughCircles(gray,cv2.HOUGH_GRADIENT,1,200,param1=50,param2=30,minRadius=25,maxRadius=30)
         #circles_img = np.uint16(np.around(circles_img))
         return circles_img
 
